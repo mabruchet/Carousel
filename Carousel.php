@@ -30,17 +30,20 @@ class Carousel extends BaseModule
 {
     public const DOMAIN_NAME = 'carousel';
 
+    /** Back-office translation domain (I18n/backOffice/default-twig/). */
+    public const BO_DOMAIN = 'carousel.bo.default-twig';
+
     /**
      * @return bool true to continue module activation, false to prevent it
      */
     public function preActivation(?ConnectionInterface $con = null): bool
     {
-        if (!self::getConfigValue('is_initialized', false)) {
+        if (!self::getConfigValue('is_initialized', '0')) {
             $database = new Database($con);
 
             $database->insertSql(null, [__DIR__.'/Config/TheliaMain.sql']);
 
-            self::setConfigValue('is_initialized', true);
+            self::setConfigValue('is_initialized', '1');
         }
 
         return true;

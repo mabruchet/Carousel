@@ -1,0 +1,153 @@
+{# Fragment rendered by the `module.configuration` hook (Carousel\Hook\BackHook::renderModuleConfiguration).
+   No `extends`: it is injected into the core page `module/configure.html.twig`. #}
+{% set d = 'carousel.bo.default-twig' %}
+{% set update_position_token = assignToken() %}
+
+<div data-controller="bo-list-filter" data-testid="carousel-configuration">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">{{ 'Carousels'|trans({}, d) }}</h1>
+        {% if is_granted('CREATE', { resource: 'admin.module', module: 'Carousel' }) %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#carousel-create-dialog" data-testid="carousel-create-button">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                {{ 'Add a slide'|trans({}, d) }}
+            </button>
+        {% endif %}
+    </div>
+
+    {% if groups is empty %}
+        <div class="alert alert-info" data-testid="carousel-empty">
+            {{ 'Your carousel contains no image. Please add one using the button above.'|trans({}, d) }}
+        </div>
+    {% else %}
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <input type="search" class="form-control form-control-sm"
+                               placeholder="{{ 'Search a slide…'|trans({}, d) }}"
+                               data-bo-list-filter-target="search"
+                               data-action="input->bo-list-filter#apply"
+                               data-testid="carousel-filter-search">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm"
+                                data-bo-list-filter-target="group"
+                                data-action="change->bo-list-filter#apply"
+                                data-testid="carousel-filter-group">
+                            <option value="">{{ 'All groups'|trans({}, d) }}</option>
+                            {% for group_name, slides in groups %}
+                                <option value="{{ group_name }}">{{ group_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5 d-flex gap-3">
+                        {% for value, label in { '': 'All'|trans({}, d), '1': 'Visible'|trans({}, d), '0': 'Hidden'|trans({}, d) } %}
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="radio" name="carousel-filter-state"
+                                       id="carousel-filter-state-{{ value == '' ? 'all' : value }}" value="{{ value }}"
+                                       {{ value == '' ? 'checked' }}
+                                       data-bo-list-filter-target="state"
+                                       data-action="change->bo-list-filter#apply">
+                                <label class="form-check-label" for="carousel-filter-state-{{ value == '' ? 'all' : value }}">{{ label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info d-none" data-bo-list-filter-target="empty">
+            {{ 'No slide matches the current filter.'|trans({}, d) }}
+        </div>
+
+        {% for group_name, slides in groups %}
+            {% set group_slug = group_name|default('none')|replace({' ': '-'}) %}
+            <div class="mb-4" data-bo-list-filter-target="section" data-group="{{ group_name }}" data-testid="carousel-group-{{ group_slug }}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">
+                        <i class="bi bi-collection" aria-hidden="true"></i>
+                        {{ group_name|default('(no group)'|trans({}, d)) }}
+                        <span class="badge text-bg-secondary">{{ slides|length }}</span>
+                    </h2>
+                </div>
+
+                {% set rows = [] %}
+                {% for slide in slides %}
+                    {% set thumbnail = slide.imageUrl
+                        ? '<img src="' ~ slide.imageUrl ~ '" alt="' ~ (slide.alt ?? slide.title)|e('html_attr') ~ '" class="img-thumbnail" style="max-height:60px">'
+                        : '<span class="text-muted"><i class="bi bi-image"></i></span>' %}
+                    {% set rows = rows|merge([{
+                        id: slide.id,
+                        image: thumbnail ~ (slide.mobileFile ? ' <i class="bi bi-phone text-muted" title="' ~ 'Has a mobile image'|trans({}, d) ~ '"></i>'),
+                        title: slide.title ?? '—',
+                        status: slide.status,
+                        status_label: status_labels[slide.status].label|default(slide.status),
+                        visible: slide.visible,
+                        toggle_url: path('carousel.toggle', { slideId: slide.id }) ~ '?_token=' ~ update_position_token,
+                        position: slide.position,
+                        _actions: [
+                            row_action('edit', 'Edit'|trans, path('carousel.edit', { slideId: slide.id })),
+                            row_action('delete', 'Delete'|trans, null, '#carousel-delete-dialog', 'DELETE', { resource: 'admin.module', module: 'Carousel' }, { 'slide-id': slide.id }),
+                        ],
+                        _attrs: {
+                            'data-search': ((slide.title ?? '') ~ ' ' ~ (slide.alt ?? '') ~ ' ' ~ group_name)|lower,
+                            'data-active': slide.visible ? '1' : '0',
+                        },
+                    }]) %}
+                {% endfor %}
+
+                {{ component('BoDataTable', {
+                    id: 'carousel-' ~ group_slug,
+                    columns: [
+                        column_html('image', 'Image'|trans({}, d)),
+                        column('title', 'Title'|trans),
+                        column_badge('status', 'Publication'|trans({}, d), {
+                            'online': 'success',
+                            'disabled': 'secondary',
+                            'scheduled': 'info',
+                            'expired': 'warning',
+                        }, 'center', 'status_label'),
+                        column_toggle('visible', 'Visible'|trans({}, d), 'toggle_url'),
+                        column('position', 'Position'|trans, 'center'),
+                        column_actions('_actions', 'Actions'|trans),
+                    ],
+                    rows: rows,
+                    emptyMessage: 'No slide in this group yet.'|trans({}, d),
+                    tbodyAttributes: {
+                        'data-controller': 'bo-sortable',
+                        'data-bo-sortable-url-value': path('carousel.update_position'),
+                        'data-bo-sortable-token-value': update_position_token,
+                        'data-bo-sortable-param-name-value': 'slide_id',
+                    },
+                }) }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% set create_form = getForm('carousel_create') %}
+    {% component 'BoCreateDialog' with {
+        id: 'carousel-create-dialog',
+        title: 'Add a slide'|trans({}, d),
+        form: create_form,
+        formAction: path('carousel.create'),
+        submitLabel: 'Create'|trans,
+        testid: 'carousel-create',
+        size: '',
+    } %}
+        {% block fields %}
+            {{ form_row(create_form.title) }}
+            {{ form_row(create_form.group) }}
+            {{ form_row(create_form.file) }}
+        {% endblock %}
+    {% endcomponent %}
+
+    {{ component('BoConfirmDialog', {
+        id: 'carousel-delete-dialog',
+        title: 'Delete a carousel image'|trans({}, d),
+        formAction: path('carousel.delete'),
+        message: 'Do you really want to remove this slide from the carousel? Its image files will be deleted.'|trans({}, d),
+        testid: 'carousel-delete',
+        prefillTrigger: 'data-slide-id',
+        prefillInput: 'slide_id',
+    }) }}
+</div>

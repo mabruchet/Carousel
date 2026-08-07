@@ -1,0 +1,134 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+{% set d = 'carousel.bo.default-twig' %}
+
+{% block title %}{{ 'Edit a slide'|trans({}, d) }}{% endblock %}
+{% block body_testid %}carousel-slide-edit{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="/admin/module/Carousel">{{ 'Carousels'|trans({}, d) }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ slide.title ?? '#' ~ slide.id }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h4 mb-0">
+                {{ 'Edit a slide'|trans({}, d) }} — {{ slide.title ?? '#' ~ slide.id }}
+                <span class="badge text-bg-light">{{ slide.group }}</span>
+            </h1>
+            <div class="d-flex align-items-center gap-2">
+                {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+                <a href="/admin/module/Carousel" class="btn btn-outline-secondary btn-sm" data-testid="carousel-slide-close">
+                    {{ 'Close'|trans }}
+                </a>
+            </div>
+        </div>
+
+        {% form_theme slide_form with bo_form_themes only %}
+        {{ form_start(slide_form, { action: path('carousel.save', { slideId: slide.id }), method: 'post', attr: { 'data-testid': 'carousel-slide-form' } }) }}
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Content'|trans({}, d) }}</div>
+                        <div class="card-body">
+                            {{ form_row(slide_form.title) }}
+                            {{ form_row(slide_form.alt) }}
+                            {{ form_row(slide_form.chapo) }}
+                            {{ form_row(slide_form.description, { attr: { class: 'wysiwyg', rows: 6 } }) }}
+                            {{ form_row(slide_form.postscriptum, { attr: { rows: 3 } }) }}
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Link / call to action'|trans({}, d) }}</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">{{ form_row(slide_form.url) }}</div>
+                                <div class="col-md-3">{{ form_row(slide_form.link_target) }}</div>
+                                <div class="col-md-3">{{ form_row(slide_form.button_label) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Publication'|trans({}, d) }}</div>
+                        <div class="card-body" data-controller="bo-date-range">
+                            {{ form_row(slide_form.group) }}
+                            <div class="form-check form-switch mb-2">
+                                {{ form_widget(slide_form.visible, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(slide_form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                {{ form_widget(slide_form.limited, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(slide_form.limited, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                            {{ form_row(slide_form.start_date, { attr: { 'data-bo-date-range-target': 'start' } }) }}
+                            {{ form_row(slide_form.end_date, { attr: { 'data-bo-date-range-target': 'end' } }) }}
+                            <div class="text-danger small" data-bo-date-range-target="message"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary" data-testid="carousel-slide-save">
+                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {{ form_end(slide_form) }}
+
+        {% set image_token = attribute(image_form, '_token') %}
+        <div class="row">
+            {% for variant in ['desktop', 'mobile'] %}
+                {% set current_url = variant == 'desktop' ? slide.imageUrl : slide.mobileImageUrl %}
+                <div class="col-md-6">
+                    <div class="card mb-3" data-testid="carousel-image-{{ variant }}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi {{ variant == 'desktop' ? 'bi-display' : 'bi-phone' }}" aria-hidden="true"></i>
+                                {{ (variant == 'desktop' ? 'Desktop image' : 'Mobile image')|trans({}, d) }}
+                            </span>
+                            {% if variant == 'mobile' and slide.mobileFile %}
+                                <form method="post" action="{{ path('carousel.image.delete', { slideId: slide.id }) }}?_token={{ assignToken() }}"
+                                      onsubmit="return confirm('{{ 'Remove the mobile image? The desktop image will be used instead.'|trans({}, d)|e('js') }}')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-testid="carousel-image-mobile-delete">
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        <div class="card-body" data-controller="bo-image-preview">
+                            <img src="{{ current_url }}" alt="" class="img-thumbnail mb-2"
+                                 style="max-height: 200px; {{ current_url ? '' : 'display:none' }}"
+                                 data-bo-image-preview-target="image">
+                            {% if variant == 'mobile' and not slide.mobileFile %}
+                                <p class="text-muted small">{{ 'No mobile image: the desktop image is used on small screens.'|trans({}, d) }}</p>
+                            {% endif %}
+                            <form method="post" action="{{ path('carousel.image.upload', { slideId: slide.id, variant: variant }) }}" enctype="multipart/form-data">
+                                <input type="hidden" name="{{ image_token.vars.full_name }}" value="{{ image_token.vars.value }}">
+                                <div class="input-group">
+                                    <input type="file" name="{{ image_form.file.vars.full_name }}" class="form-control" accept="image/*" required
+                                           data-bo-image-preview-target="input">
+                                    <button type="submit" class="btn btn-success" data-testid="carousel-image-{{ variant }}-submit">
+                                        {{ (current_url ? 'Replace'|trans({}, d) : 'Upload'|trans({}, d)) }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-carousel-slide-edit' }) }}
+{% endblock %}

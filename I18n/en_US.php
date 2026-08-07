@@ -12,6 +12,13 @@
 
 return [
     'A descriptive title' => 'A descriptive title',
+    'Button label' => 'Button label',
+    'Desktop image' => 'Desktop image',
+    'Link target' => 'Link target',
+    'New window' => 'New window',
+    'Same window' => 'Same window',
+    'The end date must be after the start date' => 'The end date must be after the start date',
+    'Visible' => 'Visible',
     'A short description, used when a summary or an introduction is required' => 'A short description, used when a summary or an introduction is required',
     'A short text, used when an additional or supplemental information is required.' => 'A short text, used when an additional or supplemental information is required.',
     'Alternative image text' => 'Alternative image text',

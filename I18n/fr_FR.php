@@ -12,6 +12,13 @@
 
 return [
     'A descriptive title' => 'Un titre descriptif',
+    'Button label' => 'Libellé du bouton',
+    'Desktop image' => 'Image desktop',
+    'Link target' => 'Cible du lien',
+    'New window' => 'Nouvelle fenêtre',
+    'Same window' => 'Même fenêtre',
+    'The end date must be after the start date' => 'La date de fin doit être postérieure à la date de début',
+    'Visible' => 'Visible',
     'A short description, used when a summary or an introduction is required' => 'Une courte description, utilisée lorsqu\'un résumé ou une introduction est requise',
     'A short text, used when an additional or supplemental information is required.' => 'Un texte court, utilisé quand une conclusion ou une information complémentaire est nécessaire.',
     'Alternative image text' => 'Texte alternatif de l\'image',
