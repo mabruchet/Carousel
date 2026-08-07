@@ -1,0 +1,129 @@
+{# Default carousel markup — self-contained (scoped CSS + vanilla JS, no library).
+   Themes may override this template or ignore the theme hook entirely and build
+   their own markup from /api/front/carousels (see the module Readme). #}
+<section class="carousel-module" id="carousel-module-{{ group }}" data-carousel-group="{{ group }}"
+         {% if autoplay > 0 %}data-carousel-autoplay="{{ autoplay }}"{% endif %}
+         aria-roledescription="carousel">
+    <div class="carousel-module__track" data-carousel-track>
+        {% for slide in slides %}
+            <div class="carousel-module__slide" role="group" aria-roledescription="slide"
+                 aria-label="{{ loop.index }} / {{ loop.length }}" data-carousel-slide>
+                <picture>
+                    {% if slide.mobileImageUrl %}
+                        <source media="(max-width: 767px)" srcset="{{ slide.mobileImageUrl }}">
+                    {% endif %}
+                    <img src="{{ slide.imageUrl }}" alt="{{ slide.alt ?? slide.title }}"
+                         {% if not loop.first %}loading="lazy"{% endif %}>
+                </picture>
+                {% if slide.title or slide.chapo or slide.description or (slide.buttonLabel and slide.url) %}
+                    <div class="carousel-module__caption">
+                        {% if slide.title %}<p class="carousel-module__title">{{ slide.title }}</p>{% endif %}
+                        {% if slide.chapo %}<p class="carousel-module__chapo">{{ slide.chapo }}</p>{% endif %}
+                        {% if slide.description %}<div class="carousel-module__description">{{ slide.description|raw }}</div>{% endif %}
+                        {% if slide.url %}
+                            <a class="carousel-module__cta" href="{{ slide.url }}"
+                               {% if slide.linkTarget == '_blank' %}target="_blank" rel="noopener"{% endif %}>
+                                {{ slide.buttonLabel ?: slide.title }}
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% if slides|length > 1 %}
+        <button type="button" class="carousel-module__nav carousel-module__nav--prev" data-carousel-prev aria-label="{{ 'Previous slide'|trans([], 'carousel') }}">&#10094;</button>
+        <button type="button" class="carousel-module__nav carousel-module__nav--next" data-carousel-next aria-label="{{ 'Next slide'|trans([], 'carousel') }}">&#10095;</button>
+    {% endif %}
+</section>
+<style>
+    .carousel-module { position: relative; }
+    .carousel-module__track {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+    }
+    .carousel-module__track::-webkit-scrollbar { display: none; }
+    .carousel-module__slide {
+        position: relative;
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+    }
+    .carousel-module__slide img { display: block; width: 100%; height: auto; }
+    .carousel-module__caption {
+        position: absolute;
+        inset-inline-start: 0;
+        bottom: 0;
+        max-width: 100%;
+        padding: 1rem 1.5rem;
+        color: #fff;
+        background: linear-gradient(transparent, rgba(0, 0, 0, .55));
+    }
+    .carousel-module__title { margin: 0; font-size: 1.5rem; font-weight: 700; }
+    .carousel-module__chapo { margin: .25rem 0 0; }
+    .carousel-module__description { margin: .25rem 0 0; font-size: .9rem; }
+    .carousel-module__cta {
+        display: inline-block;
+        margin-top: .75rem;
+        padding: .5rem 1.25rem;
+        color: #fff;
+        background: rgba(255, 255, 255, .25);
+        border: 1px solid #fff;
+        border-radius: .25rem;
+        text-decoration: none;
+    }
+    .carousel-module__nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2.5rem;
+        height: 2.5rem;
+        border: none;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, .45);
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+    }
+    .carousel-module__nav--prev { inset-inline-start: .75rem; }
+    .carousel-module__nav--next { inset-inline-end: .75rem; }
+    @media (prefers-reduced-motion: reduce) {
+        .carousel-module__track { scroll-behavior: auto; }
+    }
+</style>
+<script>
+    (function () {
+        'use strict';
+        document.querySelectorAll('.carousel-module:not([data-carousel-ready])').forEach(function (root) {
+            root.setAttribute('data-carousel-ready', '1');
+
+            var track = root.querySelector('[data-carousel-track]');
+            var slides = root.querySelectorAll('[data-carousel-slide]');
+            if (!track || slides.length < 2) {
+                return;
+            }
+
+            var goTo = function (delta) {
+                var width = track.clientWidth;
+                var index = Math.round(track.scrollLeft / width) + delta;
+                index = (index + slides.length) % slides.length;
+                track.scrollTo({ left: index * width });
+            };
+
+            var prev = root.querySelector('[data-carousel-prev]');
+            var next = root.querySelector('[data-carousel-next]');
+            if (prev) { prev.addEventListener('click', function () { goTo(-1); }); }
+            if (next) { next.addEventListener('click', function () { goTo(1); }); }
+
+            var interval = parseInt(root.getAttribute('data-carousel-autoplay') || '0', 10);
+            if (interval > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                var timer = setInterval(function () { goTo(1); }, interval);
+                var stop = function () { clearInterval(timer); };
+                root.addEventListener('pointerenter', stop, { once: true });
+                root.addEventListener('focusin', stop, { once: true });
+            }
+        });
+    })();
+</script>
