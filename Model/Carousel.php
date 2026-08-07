@@ -19,9 +19,8 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Thelia\Core\File\FileModelInterface;
 use Thelia\Core\File\FileModelParentInterface;
-use Thelia\Form\BaseForm;
 
-class Carousel extends BaseCarousel implements FileModelInterface
+class Carousel extends BaseCarousel implements FileModelInterface, FileModelParentInterface
 {
     /**
      * Migration Thelia 3 : FileModelInterface::getFile() est desormais typee
@@ -72,18 +71,10 @@ class Carousel extends BaseCarousel implements FileModelInterface
         return $this->getId();
     }
 
-    /**
-     * @return FileModelParentInterface the parent file model
-     */
-    public function getParentFileModel(): \Thelia\Core\File\FileModelParentInterface {
-        return new static();
+    public function getParentFileModel(): FileModelParentInterface {
+        return new self();
     }
 
-    /**
-     * Get the ID of the form used to change this object information.
-     *
-     * @return BaseForm the form
-     */
     public function getUpdateFormId(): string {
         return 'carousel.image';
     }
@@ -113,11 +104,6 @@ class Carousel extends BaseCarousel implements FileModelInterface
         return CarouselQuery::create();
     }
 
-    /**
-     * @param bool $visible true if the file is visible, false otherwise
-     *
-     * @return FileModelInterface
-     */
     // Migration Thelia 3 : le parametre est desormais type dans l'interface
     // (?int, car la colonne est un TINYINT nullable et non un booleen).
     public function setVisible(?int $visible = null): static

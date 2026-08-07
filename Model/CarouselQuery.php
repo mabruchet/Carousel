@@ -28,4 +28,11 @@ class CarouselQuery extends BaseCarouselQuery
         return $this->orderByPosition()
             ->find();
     }
+
+    public function filterByPublished(): static
+    {
+        return $this
+            ->where('(carousel.disable IS NULL OR carousel.disable = 0)')
+            ->where('(carousel.limited IS NULL OR carousel.limited = 0 OR (carousel.start_date <= NOW() AND carousel.end_date >= NOW()))');
+    }
 } // CarouselQuery

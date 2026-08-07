@@ -30,6 +30,9 @@ use Thelia\Type\TypeCollection;
  * Class CarouselLoop.
  *
  * @author manuel raynaud <mraynaud@openstudio.fr>
+ *
+ * @deprecated since 3.0, will be removed in 4.0 — use the /api/front/carousels
+ *             API resource or the `carousel` theme hook instead
  */
 class Carousel extends Image
 {
@@ -81,24 +84,13 @@ class Carousel extends Image
             $startDate = $carousel->getStartDate();
             $endDate = $carousel->getEndDate();
 
-            if ($carousel->getLimited()) {
-                $now = new \DateTime();
-                if ($carousel->getDisable()) {
-                    if ($now > $startDate && $now < $endDate) {
-                        $carousel
-                            ->setDisable(0)
-                            ->save();
-                    }
-                } else {
-                    if ($now < $startDate || $now > $endDate) {
-                        $carousel
-                            ->setDisable(1)
-                            ->save();
-                    }
-                }
-            }
+            // Publication state is computed on the fly — never persisted from a read path.
+            $now = new \DateTime();
+            $isPublished = !$carousel->getDisable()
+                && (!$carousel->getLimited()
+                    || ($startDate !== null && $endDate !== null && $now >= $startDate && $now <= $endDate));
 
-            if ($this->getFilterDisableSlides() && $carousel->getDisable()) {
+            if ($this->getFilterDisableSlides() && !$isPublished) {
                 continue;
             }
 
@@ -135,7 +127,7 @@ class Carousel extends Image
             if (null !== $height) {
                 $event->setHeight($height);
             }
-            $event->setResizeMode($resize_mode);
+            $event->setResizeMode((string) $resize_mode);
             if (null !== $rotation) {
                 $event->setRotation($rotation);
             }
@@ -146,7 +138,7 @@ class Carousel extends Image
                 $event->setQuality($quality);
             }
             if (null !== $effects) {
-                $event->setEffects($effects);
+                $event->setEffects(explode(',', (string) $effects));
             }
             if (null !== $format) {
                 $event->setFormat($format);
@@ -178,7 +170,7 @@ class Carousel extends Image
                 ->set('ALT', $carousel->getVirtualColumn('i18n_ALT'))
                 ->set('URL', $carousel->getUrl())
                 ->set('POSITION', $carousel->getPosition())
-                ->set('DISABLE', $carousel->getDisable())
+                ->set('DISABLE', $isPublished ? 0 : 1)
                 ->set('GROUP', $carousel->getGroup())
                 ->set('LIMITED', $carousel->getLimited())
                 ->set('START_DATE', $startDate)
@@ -224,12 +216,15 @@ class Carousel extends Image
                     $search->clearOrderByColumns();
                     $search->addAscendingOrderByColumn('RAND()');
                     break 2;
-                    break;
             }
         }
 
         if ($group) {
             $search->filterByGroup($group);
+        }
+
+        if ($this->getFilterDisableSlides()) {
+            $search->filterByPublished();
         }
 
         return $search;
