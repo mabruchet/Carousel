@@ -1,8 +1,10 @@
 {
     "name": "thelia/carousel-module",
+    "description": "Manage image carousels by group, with desktop/mobile variants, publication window and back-office preview",
     "license": "LGPL-3.0+",
     "type": "thelia-module",
     "require": {
+        "php": ">=8.3",
         "thelia/installer": "~1.1"
     },
     "extra": {

@@ -13,10 +13,12 @@ CREATE TABLE `carousel`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `file` VARCHAR(255),
+    `mobile_file` VARCHAR(255),
     `position` INTEGER,
     `disable` INTEGER,
     `group` VARCHAR(255),
     `url` VARCHAR(255),
+    `link_target` VARCHAR(8),
     `limited` INTEGER,
     `start_date` DATETIME,
     `end_date` DATETIME,
@@ -40,6 +42,7 @@ CREATE TABLE `carousel_i18n`
     `description` LONGTEXT,
     `chapo` TEXT,
     `postscriptum` TEXT,
+    `button_label` VARCHAR(255),
     PRIMARY KEY (`id`,`locale`),
     CONSTRAINT `carousel_i18n_fk_2ec1b2`
         FOREIGN KEY (`id`)

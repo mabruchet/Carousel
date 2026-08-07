@@ -36,12 +36,15 @@ class Carousel extends BaseCarousel implements FileModelInterface
     }
 
     public function preDelete(?ConnectionInterface $con = null): bool {
-        $carousel = new \Carousel\Carousel();
-
+        $uploadDir = $this->getUploadDir();
         $fs = new Filesystem();
 
         try {
-            $fs->remove($carousel->getUploadDir().DS.$this->getFile());
+            foreach ([parent::getFile(), $this->getMobileFile()] as $file) {
+                if ($file !== null && $file !== '') {
+                    $fs->remove($uploadDir.DS.$file);
+                }
+            }
 
             return true;
         } catch (IOException $e) {

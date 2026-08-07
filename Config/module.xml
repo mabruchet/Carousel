@@ -13,12 +13,12 @@
         <language>en_US</language>
         <language>fr_FR</language>
     </languages>
-    <version>2.6.0</version>
+    <version>3.0.0</version>
     <author>
         <name>Manuel Raynaud, Franck Allimant</name>
         <email>manu@raynaud.io, franck@cqfdev.fr</email>
     </author>
     <type>classic</type>
-    <thelia>2.6.0</thelia>
-    <stability>alpha</stability>
+    <thelia>3.0.0</thelia>
+    <stability>beta</stability>
 </module>
