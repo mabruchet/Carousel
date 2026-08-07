@@ -45,6 +45,10 @@ class BackHook extends BaseHook
                 'type' => 'back',
                 'method' => 'renderModuleConfiguration',
             ],
+            'module.config-js' => [
+                'type' => 'back',
+                'method' => 'renderModuleConfigJs',
+            ],
         ];
     }
 
@@ -71,6 +75,11 @@ class BackHook extends BaseHook
             'groups' => $this->presenter->slidesByGroup($locale, 220, 80),
             'status_labels' => $this->statusLabels(),
         ]));
+    }
+
+    public function renderModuleConfigJs(HookRenderEvent $event): void
+    {
+        $event->add($this->render('carousel/hook/module-config-js.html.twig'));
     }
 
     /**

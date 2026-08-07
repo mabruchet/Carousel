@@ -1,0 +1,19 @@
+{# Standalone page embedded in the back-office preview iframe: renders the
+   module's REAL front template with the published slides of the group. #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|slice(0, 2) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Carousel preview — {{ group }}</title>
+    <style>body { margin: 0; font-family: system-ui, sans-serif; }</style>
+</head>
+<body>
+{% if slides is empty %}
+    <p style="padding: 1rem; color: #6c757d;">{{ 'No slide in this group yet.'|trans({}, 'carousel.bo.default-twig') }}</p>
+{% else %}
+    {% include '@CarouselModule/theme-hook/carousel.html.twig' with { group: group, slides: slides, autoplay: 0 } only %}
+{% endif %}
+</body>
+</html>

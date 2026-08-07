@@ -1,0 +1,35 @@
+{# Injected in the scripts_extra block of the core module/configure.html.twig page
+   (hook `module.config-js`). Drives the per-group preview iframes: lazy loading
+   on first opening, and desktop/mobile width switching. #}
+<script>
+    (function () {
+        'use strict';
+
+        document.querySelectorAll('[data-carousel-preview-toggle]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var panel = document.getElementById(button.getAttribute('data-carousel-preview-toggle'));
+                if (!panel) {
+                    return;
+                }
+                panel.classList.toggle('d-none');
+
+                var iframe = panel.querySelector('iframe');
+                if (iframe && !iframe.getAttribute('src')) {
+                    iframe.setAttribute('src', iframe.getAttribute('data-src'));
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-carousel-preview]').forEach(function (panel) {
+            var iframe = panel.querySelector('iframe');
+            panel.querySelectorAll('[data-carousel-preview-width]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    iframe.style.width = button.getAttribute('data-carousel-preview-width');
+                    panel.querySelectorAll('[data-carousel-preview-width]').forEach(function (other) {
+                        other.classList.toggle('active', other === button);
+                    });
+                });
+            });
+        });
+    })();
+</script>
