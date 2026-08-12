@@ -1,0 +1,9 @@
+{# Default rendering of the `Carousel` component: delegates to the module's
+   neutral markup (same template as the theme hook and the back-office preview). #}
+{% if this.slides is not empty %}
+    {% include '@CarouselModule/theme-hook/carousel.html.twig' with {
+        group: this.group,
+        slides: this.slides,
+        autoplay: this.autoplay,
+    } only %}
+{% endif %}

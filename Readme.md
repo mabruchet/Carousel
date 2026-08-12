@@ -28,7 +28,7 @@ The configuration screen lives on the module page (`/admin/module/Carousel`, als
 
 ## Front-office integration (to do in your theme)
 
-The module ships **no automatic front insertion**: the theme decides where carousels appear. Two options:
+The module ships **no automatic front insertion**: the theme decides where carousels appear. Three options:
 
 ### 1. Theme hook (default markup provided by the module)
 
@@ -59,6 +59,46 @@ translations (`i18ns.<locale>.title|chapo|description|postscriptum|alt|buttonLab
 keeps only enabled slides currently inside their publication window. An authenticated
 `GET /api/admin/carousels` variant exposes the raw fields as well (`file`, `mobileFile`, `disable`, `limited`,
 `startDate`, `endDate`).
+
+### 3. Twig component (reusable, overridable)
+
+The module ships a `Carousel` Twig component built on the same neutral markup as the theme hook:
+
+```twig
+{{ component('Carousel', { group: 'home', autoplay: 5000 }) }}
+```
+
+It reads the published slides straight through `CarouselPresenter` (no internal HTTP call, no cache
+needed) and exposes them in the flat presenter shape (`slide.title`, `slide.chapo`, `slide.buttonLabel`,
+`slide.alt`, `slide.imageUrl`, `slide.imageSrcset`, `slide.mobileImageUrl`, `slide.mobileImageSrcset`,
+`slide.url`, `slide.linkTarget`…).
+
+**Overriding from a theme** — two non-exclusive ways:
+
+1. **Class extension** (change markup and/or data logic — the `Flexy:Hero` pattern). The base class is
+   deliberately not final and its dependencies are `protected`; the attribute is *not* inherited, so the
+   child must redeclare it with its own name and template:
+
+   ```php
+   #[AsTwigComponent(name: 'Flexy:Carousel', template: '@UiComponents/Carousel/Carousel.html.twig')]
+   class Carousel extends \Carousel\Twig\Components\Carousel
+   {
+       // inherit getSlides(), or override it (add caching, filtering…)
+   }
+   ```
+
+   Both components stay registered: `Carousel` (module default) and the theme one.
+
+2. **Template-only override** — prepend a theme path to the module's Twig namespace in the theme's
+   `config/packages/twig.yaml` (theme config is prepended, so it wins over the module path):
+
+   ```yaml
+   twig:
+     paths:
+       "%kernel.project_dir%/templates/frontOffice/%thelia_front_template%/modules/Carousel": CarouselModule
+   ```
+
+   Then place your `components/Carousel.html.twig` (or `theme-hook/carousel.html.twig`) under that directory.
 
 ## Responsive images (desktop / mobile)
 

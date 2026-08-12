@@ -9,6 +9,8 @@ Thelia 3 rewrite (Twig back-office required). Breaking changes are flagged **[BC
 - Theme hook `carousel` (`{{ theme_hook('carousel', { group: 'home' }) }}`) with a self-contained default template (CSS scroll-snap, vanilla JS, `prefers-reduced-motion`).
 - Back-office: one data table per group with drag & drop ordering, visibility toggle, publication badge (online/scheduled/expired/disabled), client-side filtering, per-slide edit page (WYSIWYG, language switcher, image previews, publication window validation), live preview per group with desktop/mobile widths.
 - `CarouselSlideService` / `CarouselPresenter` service layer (transactions, position renumbering per group).
+- Reusable `Carousel` Twig component (`{{ component('Carousel', { group: 'home' }) }}`), designed to be
+  extended by themes (non-final class, protected dependencies — see Readme "Twig component").
 
 ## Changed
 - **[BC]** The bulk edit form (`CarouselUpdateForm`, route `carousel.update`) is replaced by per-slide edition (`carousel.edit`/`carousel.save`) and dedicated routes (create, image upload per variant, update-position, toggle, delete).
