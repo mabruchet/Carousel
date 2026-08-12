@@ -48,6 +48,14 @@ final readonly class CarouselNormalizer implements NormalizerInterface
             ->setImageUrl($this->presenter->processedImageUrl($carousel->getFile(), $width, $height))
             ->setMobileImageUrl($this->presenter->processedImageUrl($carousel->getMobileFile(), $width, $height));
 
+        // srcset variants only accompany full-size renders: when the client asks
+        // for an explicit size, it gets exactly that size.
+        if ($width === null && $height === null) {
+            $carousel
+                ->setImageSrcset($this->presenter->processedSrcset($carousel->getFile(), CarouselPresenter::DESKTOP_SRCSET_WIDTHS))
+                ->setMobileImageSrcset($this->presenter->processedSrcset($carousel->getMobileFile(), CarouselPresenter::MOBILE_SRCSET_WIDTHS));
+        }
+
         return $this->normalizer->normalize($object, $format, $context);
     }
 

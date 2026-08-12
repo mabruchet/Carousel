@@ -22,6 +22,10 @@ use Thelia\Core\Event\TheliaEvents;
 
 final readonly class CarouselPresenter
 {
+    /** Ratio-preserving variant widths used to build the `srcset` attributes. */
+    public const DESKTOP_SRCSET_WIDTHS = [768, 1280, 1920];
+    public const MOBILE_SRCSET_WIDTHS = [480, 828];
+
     public function __construct(private EventDispatcherInterface $eventDispatcher)
     {
     }
@@ -75,17 +79,53 @@ final readonly class CarouselPresenter
             ->setSourceFilepath($sourceFilepath)
             ->setCacheSubdirectory('carousel');
 
+        // The cache keys file names on getOptionsHash(), which is EMPTY unless
+        // width, height, resize_mode AND background_color are ALL set — colliding
+        // every render of a file on one cache entry. Hence the explicit background
+        // and the square bound (height = width) on the ratio-preserving branch.
         if ($width !== null && $height !== null) {
             $imageEvent
                 ->setWidth($width)
                 ->setHeight($height)
+                ->setBackgroundColor('ffffff')
                 // The event stores the mode as string; the core casts it back to int.
                 ->setResizeMode((string) \Thelia\Action\Image::EXACT_RATIO_WITH_BORDERS);
+        } elseif ($width !== null) {
+            $imageEvent
+                ->setWidth($width)
+                ->setHeight($width)
+                ->setBackgroundColor('ffffff')
+                ->setResizeMode((string) \Thelia\Action\Image::KEEP_IMAGE_RATIO);
         }
 
         $this->eventDispatcher->dispatch($imageEvent, TheliaEvents::IMAGE_PROCESS);
 
         return $imageEvent->getFileUrl();
+    }
+
+    /**
+     * Builds a `srcset` attribute value from one source file: each width produces
+     * a ratio-preserving variant through the Thelia image cache.
+     *
+     * @param int[] $widths
+     */
+    public function processedSrcset(?string $file, array $widths): ?string
+    {
+        if ($file === null || $file === '') {
+            return null;
+        }
+
+        $entries = [];
+
+        foreach ($widths as $width) {
+            $url = $this->processedImageUrl($file, $width);
+
+            if ($url !== null) {
+                $entries[] = $url.' '.$width.'w';
+            }
+        }
+
+        return $entries === [] ? null : implode(', ', $entries);
     }
 
     /**
@@ -116,6 +156,14 @@ final readonly class CarouselPresenter
             'mobileFile' => $slide->getMobileFile(),
             'imageUrl' => $this->processedImageUrl($slide->getFile(), $width, $height),
             'mobileImageUrl' => $this->processedImageUrl($slide->getMobileFile(), $width, $height),
+            // srcset variants are only generated for full-size renders (front, preview) —
+            // never for the back-office thumbnails, which request an explicit size.
+            'imageSrcset' => $width === null && $height === null
+                ? $this->processedSrcset($slide->getFile(), self::DESKTOP_SRCSET_WIDTHS)
+                : null,
+            'mobileImageSrcset' => $width === null && $height === null
+                ? $this->processedSrcset($slide->getMobileFile(), self::MOBILE_SRCSET_WIDTHS)
+                : null,
         ];
     }
 

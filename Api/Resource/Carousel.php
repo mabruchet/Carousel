@@ -115,12 +115,18 @@ class Carousel extends AbstractTranslatableResource
     #[Groups([self::GROUP_ADMIN_READ])]
     public ?\DateTime $endDate = null;
 
-    /** Processed image URLs, filled by CarouselNormalizer (not mapped to a column). */
+    /** Processed image URLs and srcsets, filled by CarouselNormalizer (not mapped to a column). */
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public ?string $imageUrl = null;
 
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public ?string $mobileImageUrl = null;
+
+    #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
+    public ?string $imageSrcset = null;
+
+    #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
+    public ?string $mobileImageSrcset = null;
 
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public I18nCollection $i18ns;
@@ -277,6 +283,30 @@ class Carousel extends AbstractTranslatableResource
     public function setMobileImageUrl(?string $mobileImageUrl): self
     {
         $this->mobileImageUrl = $mobileImageUrl;
+
+        return $this;
+    }
+
+    public function getImageSrcset(): ?string
+    {
+        return $this->imageSrcset;
+    }
+
+    public function setImageSrcset(?string $imageSrcset): self
+    {
+        $this->imageSrcset = $imageSrcset;
+
+        return $this;
+    }
+
+    public function getMobileImageSrcset(): ?string
+    {
+        return $this->mobileImageSrcset;
+    }
+
+    public function setMobileImageSrcset(?string $mobileImageSrcset): self
+    {
+        $this->mobileImageSrcset = $mobileImageSrcset;
 
         return $this;
     }

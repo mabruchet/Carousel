@@ -53,12 +53,69 @@ library such as Swiper if you need more (thumbnails, fade transitions…).
 }) %}
 ```
 
-`GET /api/front/carousels` returns the slides with processed image URLs (`imageUrl`, `mobileImageUrl` — resize
-them with optional `width`/`height` query parameters), the link (`url`, `linkTarget`), the position, and the
+`GET /api/front/carousels` returns the slides with processed image URLs and `srcset` values (`imageUrl`,
+`mobileImageUrl`, `imageSrcset`, `mobileImageSrcset` — see the next section), the link (`url`, `linkTarget`), the position, and the
 translations (`i18ns.<locale>.title|chapo|description|postscriptum|alt|buttonLabel`). The `published=1` filter
 keeps only enabled slides currently inside their publication window. An authenticated
 `GET /api/admin/carousels` variant exposes the raw fields as well (`file`, `mobileFile`, `disable`, `limited`,
 `startDate`, `endDate`).
+
+## Responsive images (desktop / mobile)
+
+### Approach: art direction + resolution switching
+
+Each slide carries **one content** (title, texts, link) and **two visuals**: a mandatory **desktop image**
+and an optional **mobile image**. This is *art direction*: the mobile visual can be a different framing
+(portrait crop, zoom on the subject), not just a scaled-down copy of the desktop one. The browser picks the
+variant through `<picture><source media="(max-width: …)">`.
+
+Within each variant, *resolution switching* is handled by `srcset`/`sizes`: several widths of the same image
+(desktop: 768 / 1280 / 1920&nbsp;w — mobile: 480 / 828&nbsp;w), generated on the fly by the Thelia image
+cache (ratio-preserving resize). The browser downloads the one best suited to the display width and pixel
+density.
+
+### Storage
+
+Table `carousel`: the `file` column holds the desktop file name, `mobile_file` the mobile one (`NULL` when
+absent — fallback: the desktop image is served everywhere). Files live in `local/media/images/carousel/`,
+named `<name>-<id>-desktop.<ext>` / `<name>-<id>-mobile.<ext>` (the variant suffix prevents the two images
+of a slide from colliding on disk — see `CarouselSlideService::attachImage()`). The size variants are **not**
+stored in the database: they are derived on demand from the source file by the image cache
+(`/cache/images/carousel/…`).
+
+### What the API returns
+
+* `imageUrl` / `mobileImageUrl` — full-size URL, or resized when `?width=&height=` is passed;
+* `imageSrcset` / `mobileImageSrcset` — ready-to-drop `srcset` attribute values (only filled on full-size
+  renders, i.e. without `width`/`height` parameters).
+
+`mobileImageSrcset` is `null` when the slide has no mobile image: in that case do **not** render the
+`<source>` tag, the desktop `<img>` covers every viewport.
+
+### Theme markup
+
+Recommended pattern:
+
+```twig
+<picture>
+    {% if slide.mobileImageSrcset %}
+        <source media="(max-width: 1023px)" srcset="{{ slide.mobileImageSrcset }}" sizes="100vw">
+    {% endif %}
+    <img src="{{ slide.imageUrl }}" srcset="{{ slide.imageSrcset }}" sizes="100vw"
+         alt="{{ slide.i18ns.alt }}" loading="lazy">
+</picture>
+```
+
+The module's `theme_hook('carousel', …)` default template already applies this markup, and the
+vallereuil-scierie theme ships a `{{ component('Flexy:Carousel', { group: 'home' }) }}` component built on
+the same pattern.
+
+### Adjusting the widths
+
+The width sets are constants of `Service/CarouselPresenter.php` (`DESKTOP_SRCSET_WIDTHS`,
+`MOBILE_SRCSET_WIDTHS`): adapt them if your theme breakpoints change. The `sizes` attribute must reflect the
+actual rendered width — `100vw` for a full-width carousel, e.g. `50vw` if the carousel sits in a half-width
+column.
 
 ## Loop (deprecated)
 
@@ -69,6 +126,7 @@ database; the publication state is computed at read time.
 
 ## Data model
 
-Table `carousel`: `file`, `mobile_file`, `group`, `position` (unique per group, managed by drag & drop),
+Table `carousel`: `file`, `mobile_file` (desktop / optional mobile visuals, see « Responsive images » above),
+`group`, `position` (unique per group, managed by drag & drop),
 `url`, `link_target`, `disable`, `limited` + `start_date`/`end_date`, timestamps.
 Table `carousel_i18n`: `alt`, `title`, `chapo`, `description`, `postscriptum`, `button_label`.

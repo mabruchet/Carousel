@@ -9,10 +9,13 @@
             <div class="carousel-module__slide" role="group" aria-roledescription="slide"
                  aria-label="{{ loop.index }} / {{ loop.length }}" data-carousel-slide>
                 <picture>
-                    {% if slide.mobileImageUrl %}
-                        <source media="(max-width: 767px)" srcset="{{ slide.mobileImageUrl }}">
+                    {% if slide.mobileImageSrcset ?? slide.mobileImageUrl %}
+                        <source media="(max-width: 767px)"
+                                srcset="{{ slide.mobileImageSrcset ?? slide.mobileImageUrl }}" sizes="100vw">
                     {% endif %}
-                    <img src="{{ slide.imageUrl }}" alt="{{ slide.alt ?? slide.title }}"
+                    <img src="{{ slide.imageUrl }}"
+                         {% if slide.imageSrcset ?? null %}srcset="{{ slide.imageSrcset }}" sizes="100vw"{% endif %}
+                         alt="{{ slide.alt ?? slide.title }}"
                          {% if not loop.first %}loading="lazy"{% endif %}>
                 </picture>
                 {% if slide.title or slide.chapo or slide.description or (slide.buttonLabel and slide.url) %}
