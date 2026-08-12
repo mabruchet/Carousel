@@ -19,18 +19,25 @@
             {{ 'Your carousel contains no image. Please add one using the button above.'|trans({}, d) }}
         </div>
     {% else %}
-        <div class="card mb-3">
-            <div class="card-body py-2">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-4">
-                        <input type="search" class="form-control form-control-sm"
+        {# Filter toolbar — same markup/classes as the BO modules list (module/list.html.twig),
+           scoped under .bo-modules so the theme's toolbar/search/segmented styles apply. #}
+        <div class="bo-modules">
+            <div class="bo-modules__toolbar" data-testid="carousel-filter-toolbar">
+                <div class="bo-modules__toolbar-row bo-modules__toolbar-row--split">
+                    <div class="bo-modules__search">
+                        <i class="bi bi-search bo-modules__search-icon" aria-hidden="true"></i>
+                        <input type="search"
+                               class="form-control"
                                placeholder="{{ 'Search a slide…'|trans({}, d) }}"
+                               aria-label="{{ 'Search a slide'|trans({}, d) }}"
                                data-bo-list-filter-target="search"
                                data-action="input->bo-list-filter#apply"
                                data-testid="carousel-filter-search">
                     </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm"
+
+                    <div class="bo-modules__sort">
+                        <label class="bo-modules__sort-label" for="carousel-filter-group">{{ 'Group'|trans({}, d) }}</label>
+                        <select id="carousel-filter-group" class="form-select"
                                 data-bo-list-filter-target="group"
                                 data-action="change->bo-list-filter#apply"
                                 data-testid="carousel-filter-group">
@@ -40,16 +47,18 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-5 d-flex gap-3">
+                </div>
+
+                <div class="bo-modules__toolbar-row">
+                    <div class="btn-group bo-segmented" role="group" aria-label="{{ 'Filter by visibility'|trans({}, d) }}">
                         {% for value, label in { '': 'All'|trans({}, d), '1': 'Visible'|trans({}, d), '0': 'Hidden'|trans({}, d) } %}
-                            <div class="form-check form-check-inline mb-0">
-                                <input class="form-check-input" type="radio" name="carousel-filter-state"
-                                       id="carousel-filter-state-{{ value == '' ? 'all' : value }}" value="{{ value }}"
-                                       {{ value == '' ? 'checked' }}
-                                       data-bo-list-filter-target="state"
-                                       data-action="change->bo-list-filter#apply">
-                                <label class="form-check-label" for="carousel-filter-state-{{ value == '' ? 'all' : value }}">{{ label }}</label>
-                            </div>
+                            {% set sid = 'carousel-filter-state-' ~ (value == '' ? 'all' : value) %}
+                            <input type="radio" class="btn-check" name="carousel-filter-state" id="{{ sid }}"
+                                   value="{{ value }}" autocomplete="off"{{ value == '' ? ' checked' }}
+                                   data-bo-list-filter-target="state"
+                                   data-action="change->bo-list-filter#apply"
+                                   data-testid="{{ sid }}">
+                            <label class="btn btn-outline-secondary" for="{{ sid }}">{{ label }}</label>
                         {% endfor %}
                     </div>
                 </div>
