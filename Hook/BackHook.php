@@ -21,7 +21,6 @@ use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
 use Thelia\Core\Hook\BaseHook;
 use Thelia\Core\Template\Parser\ParserResolver;
-use Thelia\Core\Translation\Translator;
 use Thelia\Tools\URL;
 
 class BackHook extends BaseHook
@@ -87,13 +86,11 @@ class BackHook extends BaseHook
      */
     private function statusLabels(): array
     {
-        $translator = Translator::getInstance();
-
         return [
-            'online' => ['label' => $translator->trans('Online', [], Carousel::BO_DOMAIN), 'variant' => 'success'],
-            'disabled' => ['label' => $translator->trans('Disabled', [], Carousel::BO_DOMAIN), 'variant' => 'secondary'],
-            'scheduled' => ['label' => $translator->trans('Scheduled', [], Carousel::BO_DOMAIN), 'variant' => 'info'],
-            'expired' => ['label' => $translator->trans('Expired', [], Carousel::BO_DOMAIN), 'variant' => 'warning'],
+            'online' => ['label' => $this->trans('Online', [], Carousel::BO_DOMAIN), 'variant' => 'success'],
+            'disabled' => ['label' => $this->trans('Disabled', [], Carousel::BO_DOMAIN), 'variant' => 'secondary'],
+            'scheduled' => ['label' => $this->trans('Scheduled', [], Carousel::BO_DOMAIN), 'variant' => 'info'],
+            'expired' => ['label' => $this->trans('Expired', [], Carousel::BO_DOMAIN), 'variant' => 'warning'],
         ];
     }
 }

@@ -74,7 +74,7 @@ class ConfigurationController extends BaseAdminController
             return $response;
         }
 
-        if (null === $slide = CarouselQuery::create()->findPk($slideId)) {
+        if (null === $slide = $this->findSlide($slideId)) {
             return $this->pageNotFound();
         }
 
@@ -114,7 +114,7 @@ class ConfigurationController extends BaseAdminController
             return $response;
         }
 
-        if (null === $slide = CarouselQuery::create()->findPk($slideId)) {
+        if (null === $slide = $this->findSlide($slideId)) {
             return $this->pageNotFound();
         }
 
@@ -142,7 +142,7 @@ class ConfigurationController extends BaseAdminController
             return $response;
         }
 
-        if (null === $slide = CarouselQuery::create()->findPk($slideId)) {
+        if (null === $slide = $this->findSlide($slideId)) {
             return $this->pageNotFound();
         }
 
@@ -219,6 +219,11 @@ class ConfigurationController extends BaseAdminController
         $slideService->delete((int) $request->get('slide_id'));
 
         return $this->redirectToConfigurationPage();
+    }
+
+    private function findSlide(int $slideId): ?\Carousel\Model\Carousel
+    {
+        return CarouselQuery::create()->findPk($slideId);
     }
 
     private function editUrl(int $slideId): string

@@ -106,10 +106,10 @@ class Carousel extends BaseCarousel implements FileModelInterface, FileModelPare
 
     // Migration Thelia 3 : le parametre est desormais type dans l'interface
     // (?int, car la colonne est un TINYINT nullable et non un booleen).
+    // La visibilite est portee par la colonne `disable` (semantique inversee) :
+    // un no-op silencieux piegerait tout appelant generique de FileModelInterface.
     public function setVisible(?int $visible = null): static
     {
-        // Not implemented
-
-        return $this;
+        return $this->setDisable($visible ? 0 : 1);
     }
 }

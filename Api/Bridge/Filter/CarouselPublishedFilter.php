@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Carousel\Api\Bridge\Filter;
 
 use ApiPlatform\Metadata\Operation;
+use Carousel\Model\CarouselQuery;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Thelia\Api\Bridge\Propel\Filter\AbstractFilter;
 
@@ -29,15 +30,15 @@ final class CarouselPublishedFilter extends AbstractFilter
         if (
             $property !== 'published'
             || null === $value
+            || !$query instanceof CarouselQuery
             || !$this->isPropertyEnabled($property, $resourceClass)
             || !filter_var($value, \FILTER_VALIDATE_BOOLEAN)
         ) {
             return;
         }
 
-        $query
-            ->where('(carousel.disable IS NULL OR carousel.disable = 0)')
-            ->where('(carousel.limited IS NULL OR carousel.limited = 0 OR (carousel.start_date <= NOW() AND carousel.end_date >= NOW()))');
+        // Single source of truth for the publication rule.
+        $query->filterByPublished();
     }
 
     public function getDescription(string $resourceClass): array
