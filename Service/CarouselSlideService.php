@@ -22,12 +22,15 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Propel;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Mime\MimeTypes;
 use Thelia\Core\File\FileManager;
 
 final readonly class CarouselSlideService
 {
-    public function __construct(private FileManager $fileManager)
-    {
+    public function __construct(
+        private FileManager $fileManager,
+        private CarouselHtmlSanitizer $htmlSanitizer,
+    ) {
     }
 
     public function create(UploadedFile $file, string $group, string $title, string $locale): CarouselModel
@@ -83,7 +86,7 @@ final readonly class CarouselSlideService
                 ->setTitle($data['title'])
                 ->setAlt($data['alt'])
                 ->setChapo($data['chapo'])
-                ->setDescription($data['description'])
+                ->setDescription($this->htmlSanitizer->sanitize($data['description']))
                 ->setPostscriptum($data['postscriptum'])
                 ->setButtonLabel($data['button_label']);
 
@@ -188,13 +191,23 @@ final readonly class CarouselSlideService
             $filesystem->mkdir($uploadDir);
         }
 
+        $previousFile = match ($variant) {
+            ImageVariant::Desktop => $slide->getFile(),
+            ImageVariant::Mobile => $slide->getMobileFile(),
+        };
+
         $fileName = $this->buildFileName($slide, $uploadedFile, $variant);
         $filePath = $uploadDir.DS.$fileName;
 
         $filesystem->rename($uploadedFile->getPathname(), $filePath, true);
         $filesystem->chmod($filePath, 0o660);
 
-        $this->removeImageFile($slide, $variant);
+        // Remove the previous file only when the new name differs: a re-upload of
+        // the same source name produces the same deterministic name, and deleting
+        // "the old one" would delete the file we just wrote.
+        if ($previousFile !== null && $previousFile !== '' && $previousFile !== $fileName) {
+            $filesystem->remove($uploadDir.DS.$previousFile);
+        }
 
         match ($variant) {
             ImageVariant::Desktop => $slide->setFile($fileName),
@@ -232,12 +245,15 @@ final readonly class CarouselSlideService
 
     private function buildFileName(CarouselModel $slide, UploadedFile $uploadedFile, ImageVariant $variant): string
     {
-        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+        // Derive the stored extension from the server-detected MIME type, never
+        // from the client-controlled original name/extension: a ".php" uploaded
+        // as an image would otherwise be symlinked, executable, into the web cache.
+        $extension = MimeTypes::getDefault()->getExtensions($uploadedFile->getMimeType() ?? '')[0] ?? 'bin';
         $baseName = pathinfo($uploadedFile->getClientOriginalName(), \PATHINFO_FILENAME);
 
         // Suffix the variant so both images of a slide never collide on disk.
         return $this->fileManager->sanitizeFileName(
-            \sprintf('%s-%d-%s%s', $baseName, $slide->getId(), $variant->value, $extension !== '' ? '.'.$extension : ''),
+            \sprintf('%s-%d-%s.%s', $baseName, $slide->getId(), $variant->value, $extension),
         );
     }
 

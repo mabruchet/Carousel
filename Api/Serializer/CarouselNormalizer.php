@@ -27,6 +27,8 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  */
 final readonly class CarouselNormalizer implements NormalizerInterface
 {
+    private const MAX_DIMENSION = 4000;
+
     public function __construct(
         private CarouselPresenter $presenter,
         private RequestStack $requestStack,
@@ -41,8 +43,8 @@ final readonly class CarouselNormalizer implements NormalizerInterface
         $carousel = $object;
 
         $request = $this->requestStack->getCurrentRequest();
-        $width = $request?->query->get('width') !== null ? (int) $request->query->get('width') : null;
-        $height = $request?->query->get('height') !== null ? (int) $request->query->get('height') : null;
+        $width = $this->clampDimension($request?->query->get('width'));
+        $height = $this->clampDimension($request?->query->get('height'));
 
         $carousel
             ->setImageUrl($this->presenter->processedImageUrl($carousel->getFile(), $width, $height))
@@ -57,6 +59,22 @@ final readonly class CarouselNormalizer implements NormalizerInterface
         }
 
         return $this->normalizer->normalize($object, $format, $context);
+    }
+
+    /**
+     * Bounds a client-provided dimension: null when absent or invalid, capped at
+     * MAX_DIMENSION otherwise. Prevents unbounded image generation (CPU/disk DoS)
+     * through arbitrarily large `width`/`height` query parameters.
+     */
+    private function clampDimension(mixed $value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $dimension = (int) $value;
+
+        return $dimension > 0 ? min($dimension, self::MAX_DIMENSION) : null;
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool

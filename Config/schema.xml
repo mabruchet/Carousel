@@ -22,6 +22,13 @@
         <column name="limited" type="INTEGER" />
         <column name="start_date" type="TIMESTAMP" />
         <column name="end_date" type="TIMESTAMP" />
+        <index name="idx_carousel_group_position">
+            <index-column name="group" />
+            <index-column name="position" />
+        </index>
+        <index name="idx_carousel_disable">
+            <index-column name="disable" />
+        </index>
         <behavior name="timestampable" />
         <behavior name="i18n">
             <parameter name="i18n_columns" value="alt, title, description, chapo, postscriptum, button_label" />

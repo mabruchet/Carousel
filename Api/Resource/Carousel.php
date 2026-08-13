@@ -19,6 +19,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use Carousel\Api\Bridge\Filter\CarouselPublishedFilter;
+use Carousel\Api\State\CarouselCollectionProvider;
 use Carousel\Model\Map\CarouselTableMap;
 use Propel\Runtime\Map\TableMap;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -45,6 +46,7 @@ use Thelia\Api\Resource\I18nCollection;
         new GetCollection(
             uriTemplate: '/front/carousels',
             name: self::ROUTE_FRONT_GET_COLLECTION,
+            provider: CarouselCollectionProvider::class,
         ),
         new Get(
             uriTemplate: '/front/carousels/{id}',

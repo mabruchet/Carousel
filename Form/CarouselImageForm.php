@@ -34,7 +34,7 @@ class CarouselImageForm extends BaseForm
                 FileType::class,
                 [
                     'constraints' => [
-                        new Image(),
+                        new Image(mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
                     ],
                     'label' => $translator->trans('Carousel image', [], Carousel::DOMAIN_NAME),
                     'label_attr' => [

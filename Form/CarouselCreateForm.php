@@ -32,7 +32,7 @@ class CarouselCreateForm extends BaseForm
             ->add('file', FileType::class, [
                 'constraints' => [
                     new NotBlank(),
-                    new Image(),
+                    new Image(mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
                 ],
                 'label' => $translator->trans('Desktop image', [], Carousel::DOMAIN_NAME),
             ])

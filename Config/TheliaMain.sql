@@ -24,7 +24,9 @@ CREATE TABLE `carousel`
     `end_date` DATETIME,
     `created_at` DATETIME,
     `updated_at` DATETIME,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_carousel_group_position` (`group`, `position`),
+    INDEX `idx_carousel_disable` (`disable`)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------

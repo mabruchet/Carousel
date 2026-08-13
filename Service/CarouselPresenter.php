@@ -37,7 +37,13 @@ final readonly class CarouselPresenter
     {
         $groups = [];
 
-        foreach (CarouselQuery::create()->orderByGroup()->orderByPosition()->find() as $slide) {
+        $slides = CarouselQuery::create()
+            ->joinWithI18n($locale)
+            ->orderByGroup()
+            ->orderByPosition()
+            ->find();
+
+        foreach ($slides as $slide) {
             $groups[$slide->getGroup() ?? ''][] = $this->present($slide, $locale, $thumbnailWidth, $thumbnailHeight);
         }
 
@@ -52,6 +58,7 @@ final readonly class CarouselPresenter
         $slides = [];
 
         $query = CarouselQuery::create()
+            ->joinWithI18n($locale)
             ->filterByGroup($group)
             ->filterByPublished()
             ->orderByPosition();
