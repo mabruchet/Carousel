@@ -14,6 +14,7 @@ return [
     'A descriptive title' => 'Un titre descriptif',
     'Button label' => 'Libellé du bouton',
     'Desktop image' => 'Image desktop',
+    'Mobile image' => 'Image mobile',
     'Link target' => 'Cible du lien',
     'New window' => 'Nouvelle fenêtre',
     'Same window' => 'Même fenêtre',

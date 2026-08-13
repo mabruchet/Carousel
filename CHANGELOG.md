@@ -3,7 +3,7 @@
 Thelia 3 rewrite (Twig back-office required). Breaking changes are flagged **[BC]**.
 
 ## Added
-- Desktop/mobile image per slide: new `carousel.mobile_file` column, rendered through `<picture>` (desktop fallback).
+- Desktop/mobile image per slide: new `carousel.mobile_file` column, rendered through `<picture>`. **[BC]** Both images are mandatory: slide creation requires the two uploads, and saving a legacy slide without a mobile image is blocked until one is uploaded (the front keeps falling back to the desktop image for legacy rows only).
 - Call-to-action: new i18n `button_label` column and `link_target` column (`_self`/`_blank`).
 - API Platform resource: `GET /api/front/carousels` (+ `/api/admin/carousels`), filters `group`, `published`, `order[position]`, processed `imageUrl`/`mobileImageUrl` (optional `width`/`height`).
 - Theme hook `carousel` (`{{ theme_hook('carousel', { group: 'home' }) }}`) with a self-contained default template (CSS scroll-snap, vanilla JS, `prefers-reduced-motion`).
@@ -17,6 +17,7 @@ Thelia 3 rewrite (Twig back-office required). Breaking changes are flagged **[BC
 - **[BC]** Back-office translation domain moved from `carousel.bo.default` to `carousel.bo.default-twig` (`I18n/backOffice/default-twig/`).
 - **[BC]** The `carousel` loop no longer persists the computed publication state at read time; `filter_disable_slides` now also excludes slides outside their publication window (SQL filter). The loop is **deprecated**, removal planned in 4.0.
 - Slide deletion is now CSRF-protected and removes both image variants from disk.
+- The BO sidebar now highlights Tools → "Edit your carousel" on the module pages, and flash messages are rendered on the slide edit page (both are workarounds for theme/TwigParser limitations — see "Developer notes" in the Readme).
 
 ## Front integration (action required)
 - **[BC]** The module no longer hooks `home.body`: the theme decides where carousels appear, through the `carousel` theme hook or the front API resource (see Readme).

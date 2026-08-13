@@ -12,6 +12,7 @@
 
 return [
     '(no group)' => '(no group)',
+    'A mobile image is required before this slide can be saved.' => 'A mobile image is required before this slide can be saved.',
     'Add a slide' => 'Add a slide',
     'All' => 'All',
     'All groups' => 'All groups',
@@ -31,13 +32,12 @@ return [
     'Link / call to action' => 'Link / call to action',
     'Mobile image' => 'Mobile image',
     'Mobile preview' => 'Mobile preview',
-    'No mobile image: the desktop image is used on small screens.' => 'No mobile image: the desktop image is used on small screens.',
     'No slide in this group yet.' => 'No slide in this group yet.',
     'No slide matches the current filter.' => 'No slide matches the current filter.',
     'Online' => 'Online',
+    'Please upload a mobile image before saving this slide.' => 'Please upload a mobile image before saving this slide.',
     'Preview' => 'Preview',
     'Publication' => 'Publication',
-    'Remove the mobile image? The desktop image will be used instead.' => 'Remove the mobile image? The desktop image will be used instead.',
     'Replace' => 'Replace',
     'Scheduled' => 'Scheduled',
     'Search a slide' => 'Search a slide',

@@ -37,7 +37,7 @@ final readonly class CarouselSlideService
     ) {
     }
 
-    public function create(UploadedFile $file, string $group, string $title, string $locale): CarouselModel
+    public function create(UploadedFile $file, UploadedFile $mobileFile, string $group, string $title, string $locale): CarouselModel
     {
         $con = Propel::getConnection(CarouselTableMap::DATABASE_NAME);
         $con->beginTransaction();
@@ -55,6 +55,7 @@ final readonly class CarouselSlideService
                 ->save($con);
 
             $this->attachImage($slide, $file, ImageVariant::Desktop);
+            $this->attachImage($slide, $mobileFile, ImageVariant::Mobile);
 
             $con->commit();
         } catch (\Throwable $exception) {
@@ -223,20 +224,6 @@ final readonly class CarouselSlideService
         $this->clearImageCache();
     }
 
-    public function removeImage(CarouselModel $slide, ImageVariant $variant): void
-    {
-        if ($variant === ImageVariant::Desktop) {
-            // The desktop image is mandatory: it can only be replaced, never removed.
-            return;
-        }
-
-        $this->removeImageFile($slide, $variant);
-
-        $slide->setMobileFile(null)->save();
-
-        $this->clearImageCache();
-    }
-
     /**
      * Purges the carousel image cache: Thelia only regenerates a cached variant
      * when the file is missing, so a same-name replacement would keep serving the
@@ -248,20 +235,6 @@ final readonly class CarouselSlideService
             (new CachedFileEvent())->setCacheSubdirectory('carousel'),
             TheliaEvents::IMAGE_CLEAR_CACHE,
         );
-    }
-
-    private function removeImageFile(CarouselModel $slide, ImageVariant $variant): void
-    {
-        $currentFile = match ($variant) {
-            ImageVariant::Desktop => $slide->getFile(),
-            ImageVariant::Mobile => $slide->getMobileFile(),
-        };
-
-        if ($currentFile === null || $currentFile === '') {
-            return;
-        }
-
-        (new Filesystem())->remove($slide->getUploadDir().DS.$currentFile);
     }
 
     private function buildFileName(CarouselModel $slide, UploadedFile $uploadedFile, ImageVariant $variant): string

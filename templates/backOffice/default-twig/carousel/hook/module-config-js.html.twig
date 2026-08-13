@@ -1,6 +1,7 @@
 {# Injected in the scripts_extra block of the core module/configure.html.twig page
    (hook `module.config-js`). Drives the per-group preview iframes: lazy loading
    on first opening, and desktop/mobile width switching. #}
+{% include '@CarouselModule/backOffice/default-twig/carousel/hook/_side-nav-active.html.twig' %}
 <script>
     (function () {
         'use strict';

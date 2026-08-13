@@ -14,6 +14,7 @@ return [
     'A descriptive title' => 'A descriptive title',
     'Button label' => 'Button label',
     'Desktop image' => 'Desktop image',
+    'Mobile image' => 'Mobile image',
     'Link target' => 'Link target',
     'New window' => 'New window',
     'Same window' => 'Same window',

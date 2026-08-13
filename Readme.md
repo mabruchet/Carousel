@@ -1,8 +1,8 @@
 # Carousel
 
 Manage image carousels from the Thelia back-office: slides are organized by **group**, each slide carries a
-**desktop image** and an optional **mobile image** (rendered through `<picture>`), a link with target, a CTA
-label, and an optional **publication window** (start/end dates). The configuration screen provides drag & drop
+**desktop image** and a **mobile image** (both mandatory, rendered through `<picture>`), a link with target,
+a CTA label, and an optional **publication window** (start/end dates). The configuration screen provides drag & drop
 ordering, per-slide edition, and a live preview of the default front rendering in desktop and mobile widths.
 
 > **Thelia 3 branch** (module 3.0.0): requires Thelia 3 with the Twig back-office
@@ -13,8 +13,9 @@ ordering, per-slide edition, and a live preview of the default front rendering i
 * Copy the module into `<thelia_root>/local/modules/` (the directory must be named `Carousel`), or require it
   with composer.
 * Activate it in the administration panel. Updating from 2.x runs `Config/update/3.0.0.sql` automatically
-  (new columns `mobile_file`, `link_target`, `button_label` — existing slides keep working, the mobile image
-  simply falls back to the desktop one).
+  (new columns `mobile_file`, `link_target`, `button_label`). Existing slides keep rendering — the front falls
+  back to the desktop image while `mobile_file` is empty — but the mobile image is now **mandatory**: saving a
+  legacy slide from the back-office is blocked until one is uploaded.
 
 > **Server hardening (recommended).** Thelia's image cache exposes the original files under
 > `public/cache/images/…` (by symlink with the default `original_image_delivery_mode`). Make sure the web
@@ -27,8 +28,10 @@ ordering, per-slide edition, and a live preview of the default front rendering i
 The configuration screen lives on the module page (`/admin/module/Carousel`, also linked from the Tools menu):
 
 * one table per group, ordered by drag & drop;
+* slide creation requires **both** the desktop and the mobile image;
 * per-slide edit page: content (title, chapo, description with WYSIWYG, postscriptum), link + CTA label,
-  desktop/mobile images with instant preview, visibility toggle and publication window, per-language edition;
+  desktop/mobile images with instant preview, visibility toggle and publication window, per-language edition.
+  Saving is blocked (danger flash) while the slide has no mobile image — this only happens on legacy 2.x rows;
 * preview card per group rendering the actual front template inside an iframe, switchable between desktop and
   mobile widths.
 
@@ -95,6 +98,31 @@ needed) and exposes them in the flat presenter shape (`slide.title`, `slide.chap
 
    Both components stay registered: `Carousel` (module default) and the theme one.
 
+   The extension can just as well be declared as a **LiveComponent** (a LiveComponent *is* a TwigComponent),
+   which makes the carousel reactive — e.g. a writable `group` that re-renders the slides without a page
+   reload, or extra `LiveAction`s. Redeclare the inherited props you want reactive as `LiveProp`; the
+   inherited `getSlides()` recomputes on every re-render, so a `group` change fetches the right slides:
+
+   ```php
+   use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+   use Symfony\UX\LiveComponent\Attribute\LiveProp;
+   use Symfony\UX\LiveComponent\DefaultActionTrait;
+
+   #[AsLiveComponent(name: 'Flexy:Carousel', template: '@UiComponents/Carousel/Carousel.html.twig')]
+   class Carousel extends \Carousel\Twig\Components\Carousel
+   {
+       use DefaultActionTrait;
+
+       #[LiveProp(writable: true)]
+       public string $group = 'home';
+   }
+   ```
+
+   LiveComponent requirement: the component template must have a **single root element** carrying
+   `{{ attributes }}`. The module's neutral template does *not* satisfy this (it is a conditional include),
+   so a LiveComponent extension must ship its own template, e.g. a root `<div {{ attributes }}>` that
+   includes `@CarouselModule/theme-hook/carousel.html.twig` or provides its own markup.
+
 2. **Template-only override** — prepend a theme path to the module's Twig namespace in the theme's
    `config/packages/twig.yaml` (theme config is prepended, so it wins over the module path):
 
@@ -110,8 +138,8 @@ needed) and exposes them in the flat presenter shape (`slide.title`, `slide.chap
 
 ### Approach: art direction + resolution switching
 
-Each slide carries **one content** (title, texts, link) and **two visuals**: a mandatory **desktop image**
-and an optional **mobile image**. This is *art direction*: the mobile visual can be a different framing
+Each slide carries **one content** (title, texts, link) and **two mandatory visuals**: a **desktop image**
+and a **mobile image**. This is *art direction*: the mobile visual can be a different framing
 (portrait crop, zoom on the subject), not just a scaled-down copy of the desktop one. The browser picks the
 variant through `<picture><source media="(max-width: …)">`.
 
@@ -122,8 +150,8 @@ density.
 
 ### Storage
 
-Table `carousel`: the `file` column holds the desktop file name, `mobile_file` the mobile one (`NULL` when
-absent — fallback: the desktop image is served everywhere). Files live in `local/media/images/carousel/`,
+Table `carousel`: the `file` column holds the desktop file name, `mobile_file` the mobile one (`NULL` only
+for legacy 2.x rows — the desktop image is then served everywhere). Files live in `local/media/images/carousel/`,
 named `<name>-<id>-desktop.<ext>` / `<name>-<id>-mobile.<ext>` (the variant suffix prevents the two images
 of a slide from colliding on disk — see `CarouselSlideService::attachImage()`). The size variants are **not**
 stored in the database: they are derived on demand from the source file by the image cache
@@ -135,8 +163,9 @@ stored in the database: they are derived on demand from the source file by the i
 * `imageSrcset` / `mobileImageSrcset` — ready-to-drop `srcset` attribute values (only filled on full-size
   renders, i.e. without `width`/`height` parameters).
 
-`mobileImageSrcset` is `null` when the slide has no mobile image: in that case do **not** render the
-`<source>` tag, the desktop `<img>` covers every viewport.
+`mobileImageSrcset` is `null` only for legacy slides that predate the mandatory mobile image: in that case do
+**not** render the `<source>` tag, the desktop `<img>` covers every viewport (the default template keeps its
+`{% if slide.mobileImageSrcset %}` guard for this reason).
 
 ### Theme markup
 
@@ -163,6 +192,31 @@ The width sets are constants of `Service/CarouselPresenter.php` (`DESKTOP_SRCSET
 actual rendered width — `100vw` for a full-width carousel, e.g. `50vw` if the carousel sits in a half-width
 column.
 
+## Developer notes — Twig back-office workarounds
+
+Two limitations of the current Thelia Twig back-office stack are worked around inside the module. Both
+workarounds become removable once fixed upstream.
+
+### Flash messages never render through `app.flashes`
+
+Thelia's `TwigParser` (TwigEngine module) exposes `app` as a plain object with only
+`environment` / `request` / `session` / `debug` — **no `flashes`** — so the flash block of the theme's
+`base.html.twig` silently renders nothing, for every module. Controllers should still use the standard
+`$this->addFlash('danger', …)` (BaseController), but the page template must render the messages itself:
+`slide-edit.html.twig` overrides `{% block flash %}` and reads `app.session.flashBag.all` directly (which
+also consumes them). Reuse that block on any new module page that needs flashes.
+
+### Sidebar active state on module pages
+
+The theme sidebar (`_side_nav.html.twig`) resolves the open section by URL prefix, so every page under
+`/admin/module/*` lights up the **Modules** section, and `main.top-menu-tools` fragments cannot carry an
+active state (the fragment `class` is never rendered). The partial
+`templates/backOffice/default-twig/carousel/hook/_side-nav-active.html.twig` (small CSS + JS) re-targets the
+sidebar to **Tools → “Edit your carousel”** on the module's own pages. It is included from
+`hook/module-config-js.html.twig` (configuration page, hook `module.config-js`) and from the
+`scripts_extra` block of `slide-edit.html.twig` — include it likewise on any new full page added to the
+module.
+
 ## Loop (deprecated)
 
 The legacy `carousel` Smarty loop (same arguments as the `image` loop, plus `group` and
@@ -172,7 +226,8 @@ database; the publication state is computed at read time.
 
 ## Data model
 
-Table `carousel`: `file`, `mobile_file` (desktop / optional mobile visuals, see « Responsive images » above),
+Table `carousel`: `file`, `mobile_file` (desktop / mobile visuals, both mandatory since 3.0 — `mobile_file`
+is `NULL` only on legacy 2.x rows, see « Responsive images » above),
 `group`, `position` (unique per group, managed by drag & drop),
 `url`, `link_target`, `disable`, `limited` + `start_date`/`end_date`, timestamps.
 Table `carousel_i18n`: `alt`, `title`, `chapo`, `description`, `postscriptum`, `button_label`.

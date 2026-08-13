@@ -9,16 +9,32 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
             <li class="breadcrumb-item"><a href="/admin/module/Carousel">{{ 'Carousels'|trans({}, d) }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ slide.title ?? '#' ~ slide.id }}</li>
+            <li class="breadcrumb-item active" aria-current="page">{{ slide.title ?? ('#' ~ slide.id) }}</li>
         </ol>
     </nav>
+{% endblock %}
+
+{# Thelia's TwigParser exposes `app` as a plain object without `flashes`, so the
+   base layout's flash block never renders anything: read the flash bag from the
+   session directly instead. #}
+{% block flash %}
+    {% if app.session %}
+        {% for type, messages in app.session.flashBag.all %}
+            {% for message in messages %}
+                <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert" data-testid="bo-flash-{{ type }}">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h4 mb-0">
-                {{ 'Edit a slide'|trans({}, d) }} — {{ slide.title ?? '#' ~ slide.id }}
+                {{ 'Edit a slide'|trans({}, d) }} — {{ slide.title ?? ('#' ~ slide.id) }}
                 <span class="badge text-bg-light">{{ slide.group }}</span>
             </h1>
             <div class="d-flex align-items-center gap-2">
@@ -94,23 +110,15 @@
                             <span>
                                 <i class="bi {{ variant == 'desktop' ? 'bi-display' : 'bi-phone' }}" aria-hidden="true"></i>
                                 {{ (variant == 'desktop' ? 'Desktop image' : 'Mobile image')|trans({}, d) }}
+                                <span class="text-danger" aria-hidden="true">*</span>
                             </span>
-                            {% if variant == 'mobile' and slide.mobileFile %}
-                                <form method="post" action="{{ path('carousel.image.delete', { slideId: slide.id }) }}"
-                                      onsubmit="return confirm('{{ 'Remove the mobile image? The desktop image will be used instead.'|trans({}, d)|e('js') }}')">
-                                    <input type="hidden" name="_token" value="{{ assignToken() }}">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-testid="carousel-image-mobile-delete">
-                                        <i class="bi bi-trash" aria-hidden="true"></i>
-                                    </button>
-                                </form>
-                            {% endif %}
                         </div>
                         <div class="card-body" data-controller="bo-image-preview">
                             <img src="{{ current_url }}" alt="" class="img-thumbnail mb-2"
                                  style="max-height: 200px; {{ current_url ? '' : 'display:none' }}"
                                  data-bo-image-preview-target="image">
                             {% if variant == 'mobile' and not slide.mobileFile %}
-                                <p class="text-muted small">{{ 'No mobile image: the desktop image is used on small screens.'|trans({}, d) }}</p>
+                                <p class="text-danger small">{{ 'A mobile image is required before this slide can be saved.'|trans({}, d) }}</p>
                             {% endif %}
                             <form method="post" action="{{ path('carousel.image.upload', { slideId: slide.id, variant: variant }) }}" enctype="multipart/form-data">
                                 <input type="hidden" name="{{ image_token.vars.full_name }}" value="{{ image_token.vars.value }}">
@@ -132,4 +140,5 @@
 
 {% block scripts_extra %}
     {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-carousel-slide-edit' }) }}
+    {% include '@CarouselModule/backOffice/default-twig/carousel/hook/_side-nav-active.html.twig' %}
 {% endblock %}

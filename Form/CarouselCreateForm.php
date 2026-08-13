@@ -37,6 +37,13 @@ class CarouselCreateForm extends BaseForm
                 ],
                 'label' => $translator->trans('Desktop image', [], Carousel::DOMAIN_NAME),
             ])
+            ->add('mobile_file', FileType::class, [
+                'constraints' => [
+                    new NotBlank(),
+                    new Image(mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+                ],
+                'label' => $translator->trans('Mobile image', [], Carousel::DOMAIN_NAME),
+            ])
             ->add('title', TextType::class, [
                 'constraints' => [new NotBlank()],
                 'label' => $translator->trans('Title', [], Carousel::DOMAIN_NAME),

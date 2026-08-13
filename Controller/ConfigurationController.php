@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Carousel\Controller;
 
+use Carousel\Carousel;
 use Carousel\Form\CarouselCreateForm;
 use Carousel\Form\CarouselImageForm;
 use Carousel\Form\CarouselSlideForm;
@@ -30,6 +31,7 @@ use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
@@ -51,6 +53,7 @@ class ConfigurationController extends BaseAdminController
 
             $slide = $slideService->create(
                 $data['file'],
+                $data['mobile_file'],
                 $data['group'],
                 $data['title'],
                 $this->getCurrentEditionLocale(),
@@ -119,6 +122,17 @@ class ConfigurationController extends BaseAdminController
             return $this->pageNotFound();
         }
 
+        // The mobile image is mandatory: block saving a slide (typically legacy
+        // data) that has none until one is uploaded.
+        if ($slide->getMobileFile() === null || $slide->getMobileFile() === '') {
+            $this->addFlash(
+                'danger',
+                Translator::getInstance()->trans('Please upload a mobile image before saving this slide.', [], Carousel::BO_DOMAIN),
+            );
+
+            return new RedirectResponse($this->editUrl($slideId));
+        }
+
         $form = $this->createForm(CarouselSlideForm::class);
 
         try {
@@ -159,22 +173,6 @@ class ConfigurationController extends BaseAdminController
                 $this->createStandardFormValidationErrorMessage($exception),
                 $form,
             );
-        }
-
-        return new RedirectResponse($this->editUrl($slideId));
-    }
-
-    #[Route('/admin/module/carousel/image/{slideId}/mobile/delete', name: 'carousel.image.delete', methods: ['POST'], requirements: ['slideId' => '\d+'])]
-    public function deleteMobileImage(int $slideId, Request $request, TokenProvider $tokenProvider, CarouselSlideService $slideService): Response
-    {
-        if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
-            return $response;
-        }
-
-        $tokenProvider->checkToken((string) $request->get('_token'));
-
-        if (null !== $slide = CarouselQuery::create()->findPk($slideId)) {
-            $slideService->removeImage($slide, ImageVariant::Mobile);
         }
 
         return new RedirectResponse($this->editUrl($slideId));

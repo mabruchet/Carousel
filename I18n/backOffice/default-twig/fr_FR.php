@@ -12,6 +12,7 @@
 
 return [
     '(no group)' => '(sans groupe)',
+    'A mobile image is required before this slide can be saved.' => 'Une image mobile est requise pour pouvoir enregistrer cette diapositive.',
     'Add a slide' => 'Ajouter une diapositive',
     'All' => 'Toutes',
     'All groups' => 'Tous les groupes',
@@ -31,13 +32,12 @@ return [
     'Link / call to action' => 'Lien / bouton d\'action',
     'Mobile image' => 'Image mobile',
     'Mobile preview' => 'Aperçu mobile',
-    'No mobile image: the desktop image is used on small screens.' => 'Pas d\'image mobile : l\'image desktop est utilisée sur petit écran.',
     'No slide in this group yet.' => 'Aucune diapositive dans ce groupe pour le moment.',
     'No slide matches the current filter.' => 'Aucune diapositive ne correspond au filtre.',
     'Online' => 'En ligne',
+    'Please upload a mobile image before saving this slide.' => 'Merci d\'ajouter une image mobile avant d\'enregistrer cette diapositive.',
     'Preview' => 'Aperçu',
     'Publication' => 'Publication',
-    'Remove the mobile image? The desktop image will be used instead.' => 'Retirer l\'image mobile ? L\'image desktop sera utilisée à la place.',
     'Replace' => 'Remplacer',
     'Scheduled' => 'Programmée',
     'Search a slide' => 'Rechercher une diapositive',
