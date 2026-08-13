@@ -26,8 +26,10 @@ final readonly class CarouselPresenter
     public const DESKTOP_SRCSET_WIDTHS = [768, 1280, 1920];
     public const MOBILE_SRCSET_WIDTHS = [480, 828];
 
-    public function __construct(private EventDispatcherInterface $eventDispatcher)
-    {
+    public function __construct(
+        private EventDispatcherInterface $eventDispatcher,
+        private CarouselHtmlSanitizer $htmlSanitizer,
+    ) {
     }
 
     /**
@@ -160,7 +162,9 @@ final readonly class CarouselPresenter
             'title' => $slide->getTitle(),
             'alt' => $slide->getAlt(),
             'chapo' => $slide->getChapo(),
-            'description' => $slide->getDescription(),
+            // Sanitized again at read time so descriptions stored before the
+            // write-time sanitizer (e.g. migrated 2.x data) are never rendered raw.
+            'description' => $this->htmlSanitizer->sanitize($slide->getDescription()),
             'postscriptum' => $slide->getPostscriptum(),
             'buttonLabel' => $slide->getButtonLabel(),
             'file' => $slide->getFile(),

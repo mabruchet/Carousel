@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Carousel\Controller;
 
+use Carousel\Carousel;
 use Carousel\Service\CarouselPresenter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,7 +29,7 @@ use Thelia\Core\Security\Resource\AdminResources;
  */
 class PreviewController extends BaseAdminController
 {
-    #[Route('/admin/module/carousel/preview/{group}', name: 'carousel.preview', methods: ['GET'], requirements: ['group' => '[\w-]{1,64}'])]
+    #[Route('/admin/module/carousel/preview/{group}', name: 'carousel.preview', methods: ['GET'], requirements: ['group' => Carousel::GROUP_PATTERN])]
     public function preview(string $group, CarouselPresenter $presenter): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::VIEW)) {

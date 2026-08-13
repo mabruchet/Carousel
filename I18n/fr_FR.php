@@ -17,6 +17,7 @@ return [
     'Link target' => 'Cible du lien',
     'New window' => 'Nouvelle fenêtre',
     'Same window' => 'Même fenêtre',
+    'Use only letters, digits, hyphens and underscores (max 64).' => 'Utilisez uniquement des lettres, chiffres, tirets et underscores (max 64).',
     'The end date must be after the start date' => 'La date de fin doit être postérieure à la date de début',
     'Visible' => 'Visible',
     'A short description, used when a summary or an introduction is required' => 'Une courte description, utilisée lorsqu\'un résumé ou une introduction est requise',

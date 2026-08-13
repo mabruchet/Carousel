@@ -25,6 +25,7 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Url;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\BaseForm;
@@ -75,7 +76,13 @@ class CarouselSlideForm extends BaseForm
                 'label' => $translator->trans('Button label', [], Carousel::DOMAIN_NAME),
             ])
             ->add('group', TextType::class, [
-                'constraints' => [new NotBlank()],
+                'constraints' => [
+                    new NotBlank(),
+                    new Regex(
+                        pattern: '/^'.Carousel::GROUP_PATTERN.'$/',
+                        message: $translator->trans('Use only letters, digits, hyphens and underscores (max 64).', [], Carousel::DOMAIN_NAME),
+                    ),
+                ],
                 'label' => $translator->trans('Group image', [], Carousel::DOMAIN_NAME),
             ])
             ->add('visible', CheckboxType::class, [

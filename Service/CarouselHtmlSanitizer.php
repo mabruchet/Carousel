@@ -42,9 +42,9 @@ final readonly class CarouselHtmlSanitizer
             ->allowElement('span')
             ->allowElement('a', ['href', 'title', 'target'])
             ->forceAttribute('a', 'rel', 'noopener noreferrer')
-            ->allowLinkSchemes(['https', 'http', 'mailto'])
-            ->dropElement('script')
-            ->dropElement('style');
+            ->allowLinkSchemes(['https', 'http', 'mailto']);
+        // Everything not explicitly allowed above (script, style, event handlers,
+        // inline styles…) is dropped by default — this is an allow-list.
 
         $this->sanitizer = new HtmlSanitizer($config);
     }

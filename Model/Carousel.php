@@ -150,12 +150,17 @@ class Carousel extends BaseCarousel implements FileModelInterface, FileModelPare
         }
 
         $now ??= new \DateTime();
+        $start = $this->getStartDate();
+        $end = $this->getEndDate();
 
-        if ($this->getStartDate() !== null && $now < $this->getStartDate()) {
+        // A limited slide with an incomplete window is never served by the front
+        // (isCurrentlyPublished requires both dates): report it as scheduled, not
+        // online, so the back-office badge matches what the front actually shows.
+        if ($start === null || $end === null || $now < $start) {
             return 'scheduled';
         }
 
-        if ($this->getEndDate() !== null && $now > $this->getEndDate()) {
+        if ($now > $end) {
             return 'expired';
         }
 

@@ -20,9 +20,12 @@ use Carousel\Model\Map\CarouselTableMap;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Propel;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Mime\MimeTypes;
+use Thelia\Core\Event\CachedFileEvent;
+use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\File\FileManager;
 
 final readonly class CarouselSlideService
@@ -30,6 +33,7 @@ final readonly class CarouselSlideService
     public function __construct(
         private FileManager $fileManager,
         private CarouselHtmlSanitizer $htmlSanitizer,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -215,6 +219,8 @@ final readonly class CarouselSlideService
         };
 
         $slide->save();
+
+        $this->clearImageCache();
     }
 
     public function removeImage(CarouselModel $slide, ImageVariant $variant): void
@@ -227,6 +233,21 @@ final readonly class CarouselSlideService
         $this->removeImageFile($slide, $variant);
 
         $slide->setMobileFile(null)->save();
+
+        $this->clearImageCache();
+    }
+
+    /**
+     * Purges the carousel image cache: Thelia only regenerates a cached variant
+     * when the file is missing, so a same-name replacement would keep serving the
+     * stale image (and the previous file's variants would be orphaned) otherwise.
+     */
+    private function clearImageCache(): void
+    {
+        $this->eventDispatcher->dispatch(
+            (new CachedFileEvent())->setCacheSubdirectory('carousel'),
+            TheliaEvents::IMAGE_CLEAR_CACHE,
+        );
     }
 
     private function removeImageFile(CarouselModel $slide, ImageVariant $variant): void

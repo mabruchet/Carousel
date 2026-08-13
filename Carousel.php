@@ -34,6 +34,13 @@ class Carousel extends BaseModule
     public const BO_DOMAIN = 'carousel.bo.default-twig';
 
     /**
+     * Allowed group name pattern, shared by the create/edit forms and the preview
+     * route requirement so both ends agree: a group must be URL-safe (it is used
+     * as a route parameter to build the back-office preview URL).
+     */
+    public const GROUP_PATTERN = '[\w-]{1,64}';
+
+    /**
      * @return bool true to continue module activation, false to prevent it
      */
     public function preActivation(?ConnectionInterface $con = null): bool

@@ -19,6 +19,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Image;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\BaseForm;
 
@@ -41,7 +42,13 @@ class CarouselCreateForm extends BaseForm
                 'label' => $translator->trans('Title', [], Carousel::DOMAIN_NAME),
             ])
             ->add('group', TextType::class, [
-                'constraints' => [new NotBlank()],
+                'constraints' => [
+                    new NotBlank(),
+                    new Regex(
+                        pattern: '/^'.Carousel::GROUP_PATTERN.'$/',
+                        message: $translator->trans('Use only letters, digits, hyphens and underscores (max 64).', [], Carousel::DOMAIN_NAME),
+                    ),
+                ],
                 'data' => 'home',
                 'label' => $translator->trans('Group image', [], Carousel::DOMAIN_NAME),
             ]);

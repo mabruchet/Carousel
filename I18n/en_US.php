@@ -17,6 +17,7 @@ return [
     'Link target' => 'Link target',
     'New window' => 'New window',
     'Same window' => 'Same window',
+    'Use only letters, digits, hyphens and underscores (max 64).' => 'Use only letters, digits, hyphens and underscores (max 64).',
     'The end date must be after the start date' => 'The end date must be after the start date',
     'Visible' => 'Visible',
     'A short description, used when a summary or an introduction is required' => 'A short description, used when a summary or an introduction is required',
