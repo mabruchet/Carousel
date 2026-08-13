@@ -1,5 +1,8 @@
 {# Standalone page embedded in the back-office preview iframe: renders the
-   module's REAL front template with the published slides of the group. #}
+   published slides of the group. Two modes, driven by the preview settings:
+   - preview_component set → the theme's Twig component + its Encore assets,
+     i.e. the actual front rendering;
+   - otherwise → the module's default front template (self-contained). #}
 <!DOCTYPE html>
 <html lang="{{ app.request.locale|slice(0, 2) }}">
 <head>
@@ -7,11 +10,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>Carousel preview — {{ group }}</title>
+    {% for entry in preview_assets_entries %}
+        {{ encore_entry_link_tags(entry) }}
+    {% endfor %}
     <style>body { margin: 0; font-family: system-ui, sans-serif; }</style>
 </head>
 <body>
 {% if slides is empty %}
     <p style="padding: 1rem; color: #6c757d;">{{ 'No slide in this group yet.'|trans({}, 'carousel.bo.default-twig') }}</p>
+{% elseif preview_component %}
+    {{ component(preview_component, { group: group, autoplay: 0 }) }}
+    {% for entry in preview_assets_entries %}
+        {{ encore_entry_script_tags(entry) }}
+    {% endfor %}
 {% else %}
     {% include '@CarouselModule/theme-hook/carousel.html.twig' with { group: group, slides: slides, autoplay: 0 } only %}
 {% endif %}

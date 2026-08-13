@@ -12,6 +12,7 @@
 
 namespace Carousel;
 
+use Carousel\DependencyInjection\PreviewComponentPass;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Symfony\Component\Filesystem\Filesystem;
@@ -39,6 +40,18 @@ class Carousel extends BaseModule
      * as a route parameter to build the back-office preview URL).
      */
     public const GROUP_PATTERN = '[\w-]{1,64}';
+
+    /**
+     * Config key: name of the theme Twig component the back-office preview
+     * renders (e.g. "Flexy:Carousel"). Empty = module default rendering.
+     */
+    public const CONFIG_PREVIEW_COMPONENT = 'preview_component';
+
+    /**
+     * Config key: comma-separated Webpack Encore entries loaded in the preview
+     * iframe so the theme component gets its CSS/JS (e.g. "app").
+     */
+    public const CONFIG_PREVIEW_ASSETS_ENTRIES = 'preview_assets_entries';
 
     /**
      * @return bool true to continue module activation, false to prevent it
@@ -128,6 +141,7 @@ class Carousel extends BaseModule
     {
         $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
             ->exclude([
+                __DIR__.'/DependencyInjection',
                 __DIR__.'/I18n',
                 __DIR__.'/Config',
                 __DIR__.'/Tests',
@@ -135,5 +149,10 @@ class Carousel extends BaseModule
             ])
             ->autowire(true)
             ->autoconfigure(true);
+    }
+
+    public static function getCompilers(): array
+    {
+        return [new PreviewComponentPass()];
     }
 }

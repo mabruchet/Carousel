@@ -32,8 +32,28 @@ The configuration screen lives on the module page (`/admin/module/Carousel`, als
 * per-slide edit page: content (title, chapo, description with WYSIWYG, postscriptum), link + CTA label,
   desktop/mobile images with instant preview, visibility toggle and publication window, per-language edition.
   Saving is blocked (danger flash) while the slide has no mobile image — this only happens on legacy 2.x rows;
-* preview card per group rendering the actual front template inside an iframe, switchable between desktop and
-  mobile widths.
+* preview card per group rendering the carousel inside an iframe, switchable between desktop and mobile
+  widths.
+
+### Preview rendering (transparent for administrators)
+
+The preview automatically shows the **actual front rendering** when the active theme ships its own
+carousel: a compiler pass (`DependencyInjection/PreviewComponentPass.php`) detects any registered Twig
+component **extending the module's base component** (the documented override contract, e.g.
+`Flexy:Carousel`) and the preview renders it with the theme's `app` Encore entry (detected in the front
+theme's `entrypoints.json`). No configuration, nothing to do: if the theme has no carousel component, the
+preview falls back to the module's neutral template.
+
+Developer overrides (module config values, no UI — normally unnecessary): `preview_component` forces the
+component name (useful if several themes/components qualify), `preview_assets_entries` forces the
+comma-separated Encore entries. Resolution lives in `Service/PreviewSettings.php`.
+
+Notes: if the resolved component cannot be rendered (renamed, removed), the preview silently falls back to
+the default rendering (a warning is logged). The component resolves slides with the admin request locale,
+while the default rendering uses the back-office edition locale. A LiveComponent override renders its
+initial HTML in the iframe (no live interactivity there). The controller also ensures the
+`templates-assets` public symlink of the front theme exists, since Thelia only creates it during front
+requests.
 
 ## Front-office integration (to do in your theme)
 

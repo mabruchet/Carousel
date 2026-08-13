@@ -43,6 +43,7 @@ return [
     'Search a slide' => 'Search a slide',
     'Search a slide…' => 'Search a slide…',
     'This preview shows the module default rendering; your theme may override it.' => 'This preview shows the module default rendering; your theme may override it.',
+    'This preview uses your theme rendering (%component%).' => 'This preview uses your theme rendering (%component%).',
     'Upload' => 'Upload',
     'Visible' => 'Visible',
     'Your carousel contains no image. Please add one using the button above.' => 'Your carousel contains no image. Please add one using the button above.',

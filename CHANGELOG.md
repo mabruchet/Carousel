@@ -8,6 +8,7 @@ Thelia 3 rewrite (Twig back-office required). Breaking changes are flagged **[BC
 - API Platform resource: `GET /api/front/carousels` (+ `/api/admin/carousels`), filters `group`, `published`, `order[position]`, processed `imageUrl`/`mobileImageUrl` (optional `width`/`height`).
 - Theme hook `carousel` (`{{ theme_hook('carousel', { group: 'home' }) }}`) with a self-contained default template (CSS scroll-snap, vanilla JS, `prefers-reduced-motion`).
 - Back-office: one data table per group with drag & drop ordering, visibility toggle, publication badge (online/scheduled/expired/disabled), client-side filtering, per-slide edit page (WYSIWYG, language switcher, image previews, publication window validation), live preview per group with desktop/mobile widths.
+- True front rendering in the per-group preview: the theme's own carousel component (any Twig component extending the module's base component) is auto-detected and rendered with the theme's `app` Encore assets — transparent for administrators, developer overrides available via module config.
 - `CarouselSlideService` / `CarouselPresenter` service layer (transactions, position renumbering per group).
 - Reusable `Carousel` Twig component (`{{ component('Carousel', { group: 'home' }) }}`), designed to be
   extended by themes (non-final class, protected dependencies — see Readme "Twig component").

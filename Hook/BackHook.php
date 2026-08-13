@@ -16,6 +16,7 @@ namespace Carousel\Hook;
 
 use Carousel\Carousel;
 use Carousel\Service\CarouselPresenter;
+use Carousel\Service\PreviewSettings;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
@@ -27,6 +28,7 @@ class BackHook extends BaseHook
 {
     public function __construct(
         private readonly CarouselPresenter $presenter,
+        private readonly PreviewSettings $previewSettings,
         ?EventDispatcherInterface $dispatcher = null,
         ?ParserResolver $parserResolver = null,
     ) {
@@ -73,6 +75,7 @@ class BackHook extends BaseHook
         $event->add($this->render('carousel/hook/module-configuration.html.twig', [
             'groups' => $this->presenter->slidesByGroup($locale, 220, 80),
             'status_labels' => $this->statusLabels(),
+            'preview_component' => $this->previewSettings->component(),
         ]));
     }
 

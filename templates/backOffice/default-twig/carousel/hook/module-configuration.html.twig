@@ -95,7 +95,13 @@
                                 <i class="bi bi-phone" aria-hidden="true"></i> {{ 'Mobile preview'|trans({}, d) }}
                             </button>
                         </div>
-                        <small class="text-muted">{{ 'This preview shows the module default rendering; your theme may override it.'|trans({}, d) }}</small>
+                        <small class="text-muted">
+                            {% if preview_component %}
+                                {{ 'This preview uses your theme rendering (%component%).'|trans({'%component%': preview_component}, d) }}
+                            {% else %}
+                                {{ 'This preview shows the module default rendering; your theme may override it.'|trans({}, d) }}
+                            {% endif %}
+                        </small>
                     </div>
                     <div class="card-body text-center" style="background: repeating-conic-gradient(#f8f9fa 0% 25%, #fff 0% 50%) 50% / 20px 20px;">
                         <iframe data-src="{{ path('carousel.preview', { group: group_name }) }}"
