@@ -17,6 +17,7 @@ namespace Carousel\Controller;
 use Carousel\Form\CarouselCreateForm;
 use Carousel\Form\CarouselImageForm;
 use Carousel\Form\CarouselSlideForm;
+use Carousel\Model\Carousel as CarouselModel;
 use Carousel\Model\CarouselQuery;
 use Carousel\Service\CarouselPresenter;
 use Carousel\Service\CarouselSlideService;
@@ -221,7 +222,7 @@ class ConfigurationController extends BaseAdminController
         return $this->redirectToConfigurationPage();
     }
 
-    private function findSlide(int $slideId): ?\Carousel\Model\Carousel
+    private function findSlide(int $slideId): ?CarouselModel
     {
         return CarouselQuery::create()->findPk($slideId);
     }

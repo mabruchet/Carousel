@@ -28,7 +28,7 @@ use Thelia\Core\Security\Resource\AdminResources;
  */
 class PreviewController extends BaseAdminController
 {
-    #[Route('/admin/module/carousel/preview/{group}', name: 'carousel.preview', methods: ['GET'])]
+    #[Route('/admin/module/carousel/preview/{group}', name: 'carousel.preview', methods: ['GET'], requirements: ['group' => '[\w-]{1,64}'])]
     public function preview(string $group, CarouselPresenter $presenter): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::VIEW)) {

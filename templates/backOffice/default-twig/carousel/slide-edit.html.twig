@@ -96,8 +96,9 @@
                                 {{ (variant == 'desktop' ? 'Desktop image' : 'Mobile image')|trans({}, d) }}
                             </span>
                             {% if variant == 'mobile' and slide.mobileFile %}
-                                <form method="post" action="{{ path('carousel.image.delete', { slideId: slide.id }) }}?_token={{ assignToken() }}"
+                                <form method="post" action="{{ path('carousel.image.delete', { slideId: slide.id }) }}"
                                       onsubmit="return confirm('{{ 'Remove the mobile image? The desktop image will be used instead.'|trans({}, d)|e('js') }}')">
+                                    <input type="hidden" name="_token" value="{{ assignToken() }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" data-testid="carousel-image-mobile-delete">
                                         <i class="bi bi-trash" aria-hidden="true"></i>
                                     </button>

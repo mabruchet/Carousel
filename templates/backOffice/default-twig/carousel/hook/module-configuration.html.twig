@@ -107,7 +107,7 @@
                 {% set rows = [] %}
                 {% for slide in slides %}
                     {% set thumbnail = slide.imageUrl
-                        ? '<img src="' ~ slide.imageUrl ~ '" alt="' ~ (slide.alt ?? slide.title)|e('html_attr') ~ '" class="img-thumbnail" style="max-height:60px">'
+                        ? '<img src="' ~ slide.imageUrl|e('html_attr') ~ '" alt="' ~ (slide.alt ?? slide.title)|e('html_attr') ~ '" class="img-thumbnail" style="max-height:60px">'
                         : '<span class="text-muted"><i class="bi bi-image"></i></span>' %}
                     {% set rows = rows|merge([{
                         id: slide.id,

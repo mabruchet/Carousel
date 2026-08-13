@@ -84,11 +84,9 @@ class Carousel extends Image
             $startDate = $carousel->getStartDate();
             $endDate = $carousel->getEndDate();
 
-            // Publication state is computed on the fly — never persisted from a read path.
-            $now = new \DateTime();
-            $isPublished = !$carousel->getDisable()
-                && (!$carousel->getLimited()
-                    || ($startDate !== null && $endDate !== null && $now >= $startDate && $now <= $endDate));
+            // Publication state is computed on the fly — never persisted from a read
+            // path — through the single source of truth on the model.
+            $isPublished = $carousel->isCurrentlyPublished();
 
             if ($this->getFilterDisableSlides() && !$isPublished) {
                 continue;

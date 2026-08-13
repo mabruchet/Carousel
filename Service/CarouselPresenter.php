@@ -97,10 +97,14 @@ final readonly class CarouselPresenter
                 ->setBackgroundColor('ffffff')
                 // The event stores the mode as string; the core casts it back to int.
                 ->setResizeMode((string) \Thelia\Action\Image::EXACT_RATIO_WITH_BORDERS);
-        } elseif ($width !== null) {
+        } elseif ($width !== null || $height !== null) {
+            // A single dimension (width-only or height-only) drives a ratio-preserving
+            // resize. The square bound (missing side = provided side) keeps a distinct
+            // cache hash per size while KEEP_IMAGE_RATIO stays driven by the real side.
+            $size = $width ?? $height;
             $imageEvent
-                ->setWidth($width)
-                ->setHeight($width)
+                ->setWidth($size)
+                ->setHeight($size)
                 ->setBackgroundColor('ffffff')
                 ->setResizeMode((string) \Thelia\Action\Image::KEEP_IMAGE_RATIO);
         }
@@ -150,7 +154,7 @@ final readonly class CarouselPresenter
             'limited' => (bool) $slide->getLimited(),
             'startDate' => $slide->getStartDate(),
             'endDate' => $slide->getEndDate(),
-            'status' => $this->publicationStatus($slide),
+            'status' => $slide->getPublicationStatus(),
             'url' => $slide->getUrl(),
             'linkTarget' => $slide->getLinkTarget(),
             'title' => $slide->getTitle(),
@@ -174,29 +178,4 @@ final readonly class CarouselPresenter
         ];
     }
 
-    /**
-     * @return 'online'|'disabled'|'scheduled'|'expired'
-     */
-    private function publicationStatus(CarouselModel $slide): string
-    {
-        if ($slide->getDisable()) {
-            return 'disabled';
-        }
-
-        if (!$slide->getLimited()) {
-            return 'online';
-        }
-
-        $now = new \DateTime();
-
-        if ($slide->getStartDate() !== null && $now < $slide->getStartDate()) {
-            return 'scheduled';
-        }
-
-        if ($slide->getEndDate() !== null && $now > $slide->getEndDate()) {
-            return 'expired';
-        }
-
-        return 'online';
-    }
 }

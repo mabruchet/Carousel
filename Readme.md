@@ -16,6 +16,12 @@ ordering, per-slide edition, and a live preview of the default front rendering i
   (new columns `mobile_file`, `link_target`, `button_label` — existing slides keep working, the mobile image
   simply falls back to the desktop one).
 
+> **Server hardening (recommended).** Thelia's image cache exposes the original files under
+> `public/cache/images/…` (by symlink with the default `original_image_delivery_mode`). Make sure the web
+> server never executes PHP from that directory — e.g. nginx `location ~* /cache/.*\.php$ { deny all; }`. The
+> module already refuses non-image uploads and derives stored extensions from the server-detected MIME type,
+> so this is defense in depth, not the primary control.
+
 ## Back-office
 
 The configuration screen lives on the module page (`/admin/module/Carousel`, also linked from the Tools menu):

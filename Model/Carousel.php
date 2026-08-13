@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Thelia package.
  * http://www.thelia.net
@@ -111,5 +113,52 @@ class Carousel extends BaseCarousel implements FileModelInterface, FileModelPare
     public function setVisible(?int $visible = null): static
     {
         return $this->setDisable($visible ? 0 : 1);
+    }
+
+    /**
+     * Single source of truth for the publication rule, shared by the presenter,
+     * the API filter (through CarouselQuery::filterByPublished) and the loop.
+     */
+    public function isCurrentlyPublished(?\DateTimeInterface $now = null): bool
+    {
+        if ($this->getDisable()) {
+            return false;
+        }
+
+        if (!$this->getLimited()) {
+            return true;
+        }
+
+        $now ??= new \DateTime();
+        $start = $this->getStartDate();
+        $end = $this->getEndDate();
+
+        return $start !== null && $end !== null && $now >= $start && $now <= $end;
+    }
+
+    /**
+     * @return 'online'|'disabled'|'scheduled'|'expired'
+     */
+    public function getPublicationStatus(?\DateTimeInterface $now = null): string
+    {
+        if ($this->getDisable()) {
+            return 'disabled';
+        }
+
+        if (!$this->getLimited()) {
+            return 'online';
+        }
+
+        $now ??= new \DateTime();
+
+        if ($this->getStartDate() !== null && $now < $this->getStartDate()) {
+            return 'scheduled';
+        }
+
+        if ($this->getEndDate() !== null && $now > $this->getEndDate()) {
+            return 'expired';
+        }
+
+        return 'online';
     }
 }
