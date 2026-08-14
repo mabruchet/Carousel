@@ -1,5 +1,11 @@
 # Carousel
 
+> **Thelia 3 users**: the Thelia 3 rewrite of this module lives in a new module,
+> [ImageGallery](https://github.com/mabruchet/ImageGallery) (mandatory desktop/mobile
+> images, responsive `<picture>`/srcset rendering, redesigned Twig back-office, API
+> Platform resources, theme-extendable Twig component). This repository now only
+> targets **Thelia 2**.
+
 This module for Thelia add a customizable carousel on your home page. You can upload you own image and overload the default template in your template for using the carousel.
 
 ## Installation
