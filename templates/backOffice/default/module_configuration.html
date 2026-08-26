@@ -25,6 +25,42 @@
         {$carousel_groups[$GROUP] = $GROUP}
     {/loop}
 
+    {* Filter bar: purely client-side (see module-configuration.js), it hides
+       rows and whole panels without reloading the page. *}
+    {if $carousel_groups|count > 0}
+        <div class="row js-carousel-filters" style="margin: 10px 0 15px;">
+            <div class="col-md-12">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <label class="sr-only" for="carousel-filter-search">{intl l="Search a slide…" d='carousel.bo.default'}</label>
+                        <input type="text" class="form-control input-sm" id="carousel-filter-search" data-testid="carousel-filter-search"
+                               placeholder="{intl l='Search a slide…' d='carousel.bo.default'}" autocomplete="off" />
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="carousel-filter-group">{intl l="All groups" d='carousel.bo.default'}</label>
+                        <select class="form-control input-sm" id="carousel-filter-group" data-testid="carousel-filter-group">
+                            <option value="__all__">{intl l="All groups" d='carousel.bo.default'}</option>
+                            {foreach $carousel_groups as $carousel_filter_group}
+                                <option value="{$carousel_filter_group}">{$carousel_filter_group}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="btn-group btn-group-sm js-carousel-filter-states" role="group">
+                        <button type="button" class="btn btn-default active" data-carousel-filter-state="all" data-testid="carousel-filter-state-all">
+                            {intl l="All" d='carousel.bo.default'}
+                        </button>
+                        <button type="button" class="btn btn-default" data-carousel-filter-state="visible" data-testid="carousel-filter-state-visible">
+                            {intl l="Visible slides" d='carousel.bo.default'}
+                        </button>
+                        <button type="button" class="btn btn-default" data-carousel-filter-state="hidden" data-testid="carousel-filter-state-hidden">
+                            {intl l="Hidden slides" d='carousel.bo.default'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
+
     {if $carousel_groups|count == 0}
         <div class="alert alert-info">
             {intl l="Your carousel contains no image. Please add one using the button above." d='carousel.bo.default'}
@@ -32,7 +68,7 @@
     {/if}
 
     {foreach $carousel_groups as $carousel_group}
-        <div class="panel panel-default carousel-group-panel" data-testid="carousel-group-{$carousel_group}">
+        <div class="panel panel-default carousel-group-panel" data-carousel-group="{$carousel_group}" data-testid="carousel-group-{$carousel_group}">
             <div class="panel-heading">
                 <span class="glyphicon glyphicon-folder-open"></span>
                 <strong>{$carousel_group}</strong>
@@ -63,7 +99,7 @@
                                     </span>
                                 {/if}
                             </td>
-                            <td>{if $TITLE}{$TITLE}{else}<em>#{$ID}</em>{/if}</td>
+                            <td class="js-carousel-title">{if $TITLE}{$TITLE}{else}<em>#{$ID}</em>{/if}</td>
                             <td>
                                 {if $LIMITED}
                                     <small>{$START_DATE|replace:'T':' '} &rarr; {$END_DATE|replace:'T':' '}</small>
