@@ -5,8 +5,7 @@
     <hooks>
         <hook id="carousel.hook">
             <tag name="hook.event_listener" event="home.body" type="front" templates="render:carousel.html" />
-            <tag name="hook.event_listener" event="module.configuration" type="back" templates="render:module_configuration.html" />
-            <tag name="hook.event_listener" event="module.config-js" type="back" templates="js:assets/js/module-configuration.js" />
+            <tag name="hook.event_listener" event="module.config-js" type="back" templates="js:assets/js/jquery-ui-1.10.3.custom.min.js;js:assets/js/module-configuration.js" />
         </hook>
         <hook id="carousel.hook.back" class="Carousel\Hook\BackHook">
             <tag name="hook.event_listener" event="main.top-menu-tools" type="back" />

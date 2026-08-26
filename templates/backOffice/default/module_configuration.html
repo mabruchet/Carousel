@@ -1,179 +1,175 @@
+{* Carousel configuration page: one panel per group, drag & drop ordering,
+   per-slide edition page, per-group preview. Rendered by BackHook on the
+   module.configuration hook. Extension slots: carousel.configuration.top,
+   carousel.slide-list.row-actions, carousel.configuration.bottom. *}
+
 <div class="general-block-decorator">
     <div class="row">
-        <div class="col-md-12 title title-without-tabs">
-            {intl l='Edit your carousel.' d='carousel.bo.default'}
+        <div class="col-md-8">
+            <div class="title title-without-tabs">
+                {intl l="Carousels" d='carousel.bo.default'}
+            </div>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="#" data-target="#carousel_create_dialog" class="btn btn-primary" data-toggle="modal" data-testid="carousel-create-button" title="{intl l='Add a slide' d='carousel.bo.default'}">
+                <span class="glyphicon glyphicon-plus"></span> {intl l="Add a slide" d='carousel.bo.default'}
+            </a>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="form-container">
-                {form name=Carousel\Form\CarouselImageForm::getName()}
-                    <form method="POST" action="{url path="/admin/module/carousel/upload"}" {form_enctype} class="clearfix">
+    {hook name="carousel.configuration.top"}
 
-                        {form_hidden_fields}
+    {* Collect the distinct groups *}
+    {assign var=carousel_groups value=[]}
+    {loop type="carousel" name="carousel.groups" backend_context=1 filter_disable_slides=0}
+        {$carousel_groups[$GROUP] = $GROUP}
+    {/loop}
 
-                        {form_field field='file'}
-                            <div class="form-group {if $error}has-error{/if}">
-                                <label for="{$label_attr.for|default:null}" class="control-label">{intl d='carousel.bo.default' l='Add an image to the carousel'}</label>
-                                <div class="input-group">
-                                    <input type="file" id="{$label_attr.for|default:null}" {if $required}required="required"{/if} name="{$name}" value="{$value}" title="{intl l='Carousel image' d='carousel.bo.default'}" placeholder="{intl l='Carousel image' d='carousel.bo.default'}" class="form-control">
-                                    <span class="input-group-btn">
-                                        <input type="submit" class="form-submit-button btn btn-sm btn-success" value="{intl d='carousel.bo.default' l='Add this image to the carousel'}" >
+    {if $carousel_groups|count == 0}
+        <div class="alert alert-info">
+            {intl l="Your carousel contains no image. Please add one using the button above." d='carousel.bo.default'}
+        </div>
+    {/if}
+
+    {foreach $carousel_groups as $carousel_group}
+        <div class="panel panel-default carousel-group-panel" data-testid="carousel-group-{$carousel_group}">
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-folder-open"></span>
+                <strong>{$carousel_group}</strong>
+                <a href="#" data-target="#carousel_preview_dialog" class="btn btn-default btn-xs pull-right js-carousel-preview" data-testid="carousel-preview-button-{$carousel_group}"                   data-toggle="modal" data-group="{$carousel_group}" data-preview-url="{url path="/carousel-preview/`$carousel_group`"}">
+                    <span class="glyphicon glyphicon-eye-open"></span> {intl l="Preview" d='carousel.bo.default'}
+                </a>
+            </div>
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th class="col-md-3">{intl l="Image" d='carousel.bo.default'}</th>
+                        <th class="col-md-3">{intl l="Title" d='carousel.bo.default'}</th>
+                        <th class="col-md-2">{intl l="Publication" d='carousel.bo.default'}</th>
+                        <th class="text-center">{intl l="Visible" d='carousel.bo.default'}</th>
+                        <th class="text-center">{intl l="Position" d='carousel.bo.default'}</th>
+                        <th class="text-right">{intl l="Actions" d='carousel.bo.default'}</th>
+                    </tr>
+                </thead>
+                <tbody class="js-carousel-sortable" data-group="{$carousel_group}" data-update-position-url="{url path='/admin/module/carousel/update-position'}">
+                    {loop type="carousel" name="carousel.list.{$carousel_group}" group=$carousel_group backend_context=1 filter_disable_slides=0 width=120 height=60 resize_mode="borders" lang=$edit_language_id}
+                        <tr data-slide-id="{$ID}">
+                            <td>
+                                <span class="glyphicon glyphicon-move js-carousel-handle" style="cursor: move; margin-right: 8px;"></span>
+                                <img src="{$IMAGE_URL}" alt="{$ALT}" style="max-height: 40px;" />
+                                {if $MOBILE_IMAGE_URL}
+                                    <span class="label label-info" title="{intl l='Has a mobile image' d='carousel.bo.default'}">
+                                        <span class="glyphicon glyphicon-phone"></span>
                                     </span>
-                                </div>
-                            </div>
-                        {/form_field}
-                    </form>
-                {/form}
-            </div>
+                                {/if}
+                            </td>
+                            <td>{if $TITLE}{$TITLE}{else}<em>#{$ID}</em>{/if}</td>
+                            <td>
+                                {if $LIMITED}
+                                    <small>{$START_DATE|replace:'T':' '} &rarr; {$END_DATE|replace:'T':' '}</small>
+                                {else}
+                                    <span class="text-muted">&mdash;</span>
+                                {/if}
+                            </td>
+                            <td class="text-center">
+                                {capture assign=toggle_path}/admin/module/carousel/toggle-visible/{$ID}{/capture}
+                                <a href="{token_url path=$toggle_path}" class="btn btn-xs {if $DISABLE}btn-default{else}btn-success{/if}" data-testid="carousel-toggle-{$ID}"
+                                   title="{intl l='Toggle visibility' d='carousel.bo.default'}">
+                                    <span class="glyphicon {if $DISABLE}glyphicon-eye-close{else}glyphicon-eye-open{/if}"></span>
+                                </a>
+                            </td>
+                            <td class="text-center js-carousel-position">{$POSITION}</td>
+                            <td class="text-right">
+                                {hook name="carousel.slide-list.row-actions" slide_id=$ID group=$carousel_group}
+                                <a href="{url path="/admin/module/carousel/edit/`$ID`"}" class="btn btn-info btn-xs" data-testid="carousel-edit-{$ID}" title="{intl l='Edit' d='carousel.bo.default'}">
+                                    <span class="glyphicon glyphicon-edit"></span>
+                                </a>
+                                <a href="#" data-target="#carousel_delete_dialog" class="btn btn-danger btn-xs js-carousel-delete" data-testid="carousel-delete-{$ID}"
+                                   data-toggle="modal" data-id="{$ID}" title="{intl l='Delete' d='carousel.bo.default'}">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </a>
+                            </td>
+                        </tr>
+                    {/loop}
+                </tbody>
+            </table>
         </div>
-    </div>
+    {/foreach}
 
-    <div class="row">
-        <div class="col-md-12 title title-without-tabs">
-            {intl l='Carousel images' d='carousel.bo.default'}
-        </div>
-    </div>
+    {hook name="carousel.configuration.bottom"}
+</div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="form-container">
-                {ifloop rel="carousel.image"}
-                    {form name="Carousel\Form\CarouselUpdateForm"}
-                    <form method="post" action="{url path="/admin/module/carousel/update"}" {form_enctype} class="clearfix">
-
-                        {include
-                            file = "includes/inner-form-toolbar.html"
-                            page_url   = "{url path='/admin/module/Carousel'}"
-                            close_url  = "{url path='/admin/modules'}"
-                        }
-
-                        {form_hidden_fields}
-
-                        {loop name="carousel.image" type="carousel" width="550" height="200" resize_mode="borders" backend_context="1" lang="$edit_language_id" filter_disable_slides=false}
-
-                        <div class="well well-sm">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p>
-                                        <a href="{$ORIGINAL_IMAGE_URL}" class="thumbnail" target="_blank">
-                                            <img src="{$IMAGE_URL}" alt="{$ALT}">
-                                        </a>
-                                    </p>
-
-                                    <div class="btn-group">
-                                        <a class="btn btn-default btn-sm image-delete" href="#delete_carousel_dialog" data-toggle="modal" data-id="{$ID}">
-                                            <i class="glyphicon glyphicon-trash"></i> {intl d='carousel.bo.default' l='Remove this image'}
-                                        </a>
-                                    </div>
-
-                                    <div class="pull-right row" style="width:170px">
-                                        <div class="col-xs-5" style="padding-top:5px">
-                                            <label for="position{$ID}">{intl d='carousel.bo.default' l='Position'}:</label>
-                                        </div>
-                                        <div class="col-xs-7">
-                                            {form_field field="position{$ID}"}
-                                                <input id="position{$ID}" class="form-control" type="number" min="1" name="{$name}" value={$POSITION}>
-                                            {/form_field}
-                                        </div>
-                                    </div>
-                                    <div style="padding-top: 10px">
-                                        <div class="row col-md-12">
-                                            {form_field field="disable{$ID}"}
-                                                <input id="disable{$ID}" type="checkbox" name="{$name}" {if $DISABLE}checked{/if}>
-                                                <label for="disable{$ID}">{$label}</label>
-                                            {/form_field}
-                                        </div>
-                                        <div class="row col-md-12">
-                                            {form_field field="limited{$ID}"}
-                                                <input id="limited{$ID}" type="checkbox" name="{$name}" {if $LIMITED}checked{/if}>
-                                                <label for="limited{$ID}">{$label}</label>
-                                            {/form_field}
-                                        </div>
-
-                                        <div class="row col-md-6">
-                                            {form_field field="start_date{$ID}"}
-                                                <label class="row col-md-12" for="{$name}">{$label}</label>
-                                                <div class="col-md-10" style="padding: 0">
-                                                    <input name="{$name}"
-                                                           placeholder="{intl l='YYYY-MM-DD' d='carousel.bo.default'}"
-                                                           id="start_date{$ID}"
-                                                           type="datetime-local"
-                                                           class="form-control datetime-picker"
-                                                           value="{$START_DATE}"/>
-                                                </div>
-                                            {/form_field}
-                                        </div>
-
-                                        <div class="row col-md-6">
-                                            {form_field field="end_date{$ID}"}
-                                                <label class="row col-md-12" for="{$name}">{$label}</label>
-                                                <div class="col-md-10" style="padding: 0">
-                                                    <input name="{$name}"
-                                                           placeholder="{intl l='YYYY-MM-DD' d='carousel.bo.default'}"
-                                                           id="end_date{$ID}"
-                                                           type="datetime-local"
-                                                           class="form-control datetime-picker"
-                                                           value="{$END_DATE}"/>
-                                                </div>
-                                            {/form_field}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    {* Not yet implemented
-                                    {render_form_field field="chapo{$ID} value=$CHAPO"}
-                                    *}
-                                    {render_form_field field="title{$ID}" value=$TITLE}
-                                    {render_form_field field="alt{$ID}" value=$ALT}
-                                    {render_form_field field="url{$ID}" value=$URL}
-                                    {render_form_field field="description{$ID}" extra_class="wysiwyg" value=$DESCRIPTION}
-                                    {render_form_field field="group{$ID}" value=$GROUP}
-                                    {* Not yet implemented
-                                    {render_form_field field="postscriptum{$ID}" value=$POSTSCRIPTUM}
-                                    *}
-                                </div>
-                            </div>
-                        </div>
-                        {/loop}
-
-                        {include
-                            file = "includes/inner-form-toolbar.html"
-                            page_url   = "{url path='/admin/module/Carousel'}"
-                            close_url  = "{url path='/admin/modules'}"
-                            page_bottom = true
-                        }
-                    </form>
-                    {/form}
-                {/ifloop}
-
-                {elseloop rel="carousel.image"}
-                    <div class="alert alert-info">
-                        {intl d='carousel.bo.default' l="Your carousel contains no image. Please add one using the form above."}
+{* ---- Slide creation dialog ---- *}
+<div class="modal fade" id="carousel_create_dialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {form name="carousel_slide_creation"}
+                <form method="POST" action="{url path='/admin/module/carousel/create'}" {form_enctype}>
+                    {form_hidden_fields}
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3>{intl l="Add a slide" d='carousel.bo.default'}</h3>
                     </div>
-                {/elseloop}
-            </div>
+                    <div class="modal-body">
+                        {render_form_field field='file'}
+                        {render_form_field field='group'}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{intl l="Cancel" d='carousel.bo.default'}</button>
+                        <button type="submit" class="btn btn-primary" data-testid="carousel-create-submit">
+                            <span class="glyphicon glyphicon-check"></span> {intl l="Create" d='carousel.bo.default'}
+                        </button>
+                    </div>
+                </form>
+            {/form}
         </div>
     </div>
 </div>
 
-{capture "delete_dialog"}
-    <input type="hidden" name="image_id" id="image_delete_id" value="" />
+{* ---- Slide deletion dialog ---- *}
+{capture assign=carousel_delete_form_content}
+    <input type="hidden" name="slide_id" id="carousel-delete-slide-id" value="" />
 {/capture}
-
 {include
-file = "includes/generic-confirm-dialog.html"
-
-dialog_id       = "delete_carousel_dialog"
-dialog_title    = {intl l="Delete a carousel image" d="carousel.bo.default"}
-dialog_message  = {intl l="Do you really want to remove this image from the carousel ?" d="carousel.bo.default"}
-
-form_action         = {url path='/admin/module/carousel/delete'}
-form_content        = {$smarty.capture.delete_dialog nofilter}
+    file = "includes/generic-confirm-dialog.html"
+    dialog_id = "carousel_delete_dialog"
+    dialog_title = {intl l="Delete a slide" d='carousel.bo.default'}
+    dialog_message = {intl l="Do you really want to remove this slide from the carousel? Its image files will be deleted." d='carousel.bo.default'}
+    form_action = {token_url path='/admin/module/carousel/delete'}
+    form_content = $carousel_delete_form_content
 }
 
-
-
+{* ---- Preview dialog ---- *}
+<div class="modal fade" id="carousel_preview_dialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="width: 90vw; max-width: 1500px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="btn-group btn-group-sm pull-right js-carousel-preview-widths" style="margin-right: 20px;" role="group">
+                    <button type="button" class="btn btn-default active" data-carousel-preview-width="1280px"
+                            data-testid="carousel-preview-width-desktop" title="{intl l='Desktop' d='carousel.bo.default'}">
+                        <i class="fas fa-desktop"></i> {intl l="Desktop" d='carousel.bo.default'}
+                    </button>
+                    <button type="button" class="btn btn-default" data-carousel-preview-width="768px"
+                            data-testid="carousel-preview-width-tablet" title="{intl l='Tablet' d='carousel.bo.default'}">
+                        <i class="fas fa-tablet-alt"></i> {intl l="Tablet" d='carousel.bo.default'}
+                    </button>
+                    <button type="button" class="btn btn-default" data-carousel-preview-width="390px"
+                            data-testid="carousel-preview-width-mobile" title="{intl l='Mobile' d='carousel.bo.default'}">
+                        <i class="fas fa-mobile-alt"></i> {intl l="Mobile" d='carousel.bo.default'}
+                    </button>
+                </div>
+                <h3>{intl l="Preview" d='carousel.bo.default'} <small class="js-carousel-preview-group"></small></h3>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    <small>{intl l="This preview renders the group with your active front theme." d='carousel.bo.default'}</small>
+                </p>
+                <div class="js-carousel-preview-viewport" style="text-align: center; background: #f4f4f4; padding: 10px; overflow-x: auto;">
+                    <iframe id="carousel-preview-iframe" src="about:blank" style="width: 1280px; height: 420px; border: 1px solid #ddd; background: #fff; display: inline-block; vertical-align: top;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 

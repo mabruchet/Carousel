@@ -12,184 +12,214 @@
 
 namespace Carousel\Controller;
 
+use Carousel\Event\CarouselEvents;
+use Carousel\Event\CarouselSlideEvent;
+use Carousel\Form\CarouselCreateForm;
 use Carousel\Form\CarouselImageForm;
-use Carousel\Form\CarouselUpdateForm;
-use Carousel\Model\Carousel;
+use Carousel\Form\CarouselSlideForm;
 use Carousel\Model\CarouselQuery;
-use Symfony\Component\Form\Form;
+use Carousel\Service\CarouselSlideService;
+use Carousel\Service\ImageVariant;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Controller\Admin\BaseAdminController;
-use Thelia\Core\Event\File\FileCreateOrUpdateEvent;
-use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Form\TheliaFormFactory;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Form\Exception\FormValidationException;
-use Thelia\Model\Lang;
-use Thelia\Model\LangQuery;
 use Thelia\Tools\URL;
 
 /**
- * Class ConfigurationController.
- *
- * @author manuel raynaud <mraynaud@openstudio.fr>
+ * Per-slide CRUD of the carousel back-office. Every mutation dispatches the
+ * CarouselEvents so extender modules can persist their own fields — see
+ * Event/CarouselEvents.php for the extension contract.
  */
 class ConfigurationController extends BaseAdminController
 {
-    public function uploadImage(
-        Request $request,
+    public function createSlide(
         TheliaFormFactory $formFactory,
-        EventDispatcherInterface $eventDispatcher
-    ) {
+        EventDispatcherInterface $eventDispatcher,
+        CarouselSlideService $slideService,
+    ): Response {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::CREATE)) {
             return $response;
         }
 
-        $form = $formFactory->createForm(CarouselImageForm::class);
-        $error_message = null;
+        $form = $formFactory->createForm(CarouselCreateForm::class);
+
         try {
-            $formData = $this->validateForm($form)->getData();
+            $data = $this->validateForm($form)->getData();
 
-            /** @var UploadedFile $fileBeingUploaded */
-            $fileBeingUploaded = $formData['file'];
+            /** @var UploadedFile $file */
+            $file = $data['file'];
 
-            $fileModel = new Carousel();
-
-            $fileCreateOrUpdateEvent = new FileCreateOrUpdateEvent(1);
-            $fileCreateOrUpdateEvent->setModel($fileModel);
-            $fileCreateOrUpdateEvent->setUploadedFile($fileBeingUploaded);
+            $slide = $slideService->create($file, $data['group'], $this->getCurrentEditionLocale());
 
             $eventDispatcher->dispatch(
-                $fileCreateOrUpdateEvent,
-                TheliaEvents::IMAGE_SAVE
+                new CarouselSlideEvent($slide, new ParameterBag($data), $this->getCurrentEditionLocale()),
+                CarouselEvents::SLIDE_CREATED
             );
 
-            // Compensate issue #1005
-            $langs = LangQuery::create()->find();
-
-            /** @var Lang $lang */
-            foreach ($langs as $lang) {
-                $fileCreateOrUpdateEvent->getModel()->setLocale($lang->getLocale())->setTitle('')->save();
-            }
-
-            $response = $this->redirectToConfigurationPage();
-        } catch (FormValidationException $e) {
-            $error_message = $this->createStandardFormValidationErrorMessage($e);
-        }
-
-        if (null !== $error_message) {
+            return new RedirectResponse($this->editUrl($slide->getId()));
+        } catch (FormValidationException $exception) {
             $this->setupFormErrorContext(
-                'carousel upload',
-                $error_message,
+                'carousel slide creation',
+                $this->createStandardFormValidationErrorMessage($exception),
                 $form
             );
 
-            $response = $this->render(
-                'module-configure',
-                [
-                    'module_code' => 'Carousel',
-                ]
-            );
+            return $this->render('module-configure', ['module_code' => 'Carousel']);
         }
-
-        return $response;
     }
 
-    /**
-     * @param Form   $form
-     * @param string $fieldName
-     * @param int    $id
-     *
-     * @return string
-     */
-    protected function getFormFieldValue($form, $fieldName, $id)
+    public function editSlide(Request $request): Response
     {
-        $value = $form->get(sprintf('%s%d', $fieldName, $id))->getData();
-
-        return $value;
-    }
-
-    public function updateAction(
-        TheliaFormFactory $formFactory
-    ) {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
             return $response;
         }
 
-        $form = $formFactory->createForm(CarouselUpdateForm::class);
+        $slideId = (int) $request->get('slideId');
 
-        $error_message = null;
-
-        try {
-            $updateForm = $this->validateForm($form);
-
-            $carousels = CarouselQuery::create()->findAllByPosition();
-
-            $locale = $this->getCurrentEditionLocale();
-
-            /** @var Carousel $carousel */
-            foreach ($carousels as $carousel) {
-                $id = $carousel->getId();
-
-                $carousel
-                    ->setPosition($this->getFormFieldValue($updateForm, 'position', $id))
-                    ->setDisable($this->getFormFieldValue($updateForm, 'disable', $id))
-                    ->setUrl($this->getFormFieldValue($updateForm, 'url', $id))
-                    ->setLocale($locale)
-                    ->setTitle($this->getFormFieldValue($updateForm, 'title', $id))
-                    ->setAlt($this->getFormFieldValue($updateForm, 'alt', $id))
-                    ->setChapo($this->getFormFieldValue($updateForm, 'chapo', $id))
-                    ->setDescription($this->getFormFieldValue($updateForm, 'description', $id))
-                    ->setPostscriptum($this->getFormFieldValue($updateForm, 'postscriptum', $id))
-                    ->setGroup($this->getFormFieldValue($updateForm, 'group', $id))
-                    ->setLimited($this->getFormFieldValue($updateForm, 'limited', $id))
-                    ->setStartDate($this->getFormFieldValue($updateForm, 'start_date', $id))
-                    ->setEndDate($this->getFormFieldValue($updateForm, 'end_date', $id))
-                    ->save();
-            }
-
-            $response = $this->redirectToConfigurationPage();
-        } catch (FormValidationException $e) {
-            $error_message = $this->createStandardFormValidationErrorMessage($e);
+        if (null === CarouselQuery::create()->findPk($slideId)) {
+            return $this->redirectToConfigurationPage();
         }
 
-        if (null !== $error_message) {
+        return $this->render('carousel/slide-edit', [
+            'slide_id' => $slideId,
+        ]);
+    }
+
+    public function saveSlide(
+        Request $request,
+        TheliaFormFactory $formFactory,
+        EventDispatcherInterface $eventDispatcher,
+    ): Response {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $slideId = (int) $request->get('slideId');
+
+        if (null === $slide = CarouselQuery::create()->findPk($slideId)) {
+            return $this->redirectToConfigurationPage();
+        }
+
+        $form = $formFactory->createForm(CarouselSlideForm::class);
+
+        try {
+            $data = $this->validateForm($form)->getData();
+            $locale = $this->getCurrentEditionLocale();
+
+            $event = new CarouselSlideEvent($slide, new ParameterBag($data), $locale);
+
+            // Native fields are persisted by CarouselSlideListener (SLIDE_UPDATE),
+            // extender modules persist their own fields on SLIDE_UPDATED.
+            $eventDispatcher->dispatch($event, CarouselEvents::SLIDE_UPDATE);
+            $eventDispatcher->dispatch($event, CarouselEvents::SLIDE_UPDATED);
+
+            return new RedirectResponse($this->editUrl($slideId));
+        } catch (FormValidationException $exception) {
             $this->setupFormErrorContext(
-                'carousel upload',
-                $error_message,
+                'carousel slide edition',
+                $this->createStandardFormValidationErrorMessage($exception),
                 $form
             );
 
-            $response = $this->render('module-configure', ['module_code' => 'Carousel']);
+            return $this->render('carousel/slide-edit', ['slide_id' => $slideId]);
         }
-
-        return $response;
     }
 
-    public function deleteAction(
-        Request $request
-    ) {
+    public function uploadImage(
+        Request $request,
+        TheliaFormFactory $formFactory,
+        CarouselSlideService $slideService,
+    ): Response {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $slideId = (int) $request->get('slideId');
+        $variant = ImageVariant::from((string) $request->get('variant'));
+
+        if (null === $slide = CarouselQuery::create()->findPk($slideId)) {
+            return $this->redirectToConfigurationPage();
+        }
+
+        $form = $formFactory->createForm(CarouselImageForm::class);
+
+        try {
+            $data = $this->validateForm($form)->getData();
+
+            $slideService->attachImage($slide, $data['file'], $variant);
+        } catch (FormValidationException $exception) {
+            $this->setupFormErrorContext(
+                'carousel image upload',
+                $this->createStandardFormValidationErrorMessage($exception),
+                $form
+            );
+        }
+
+        return new RedirectResponse($this->editUrl($slideId));
+    }
+
+    public function updatePosition(Request $request, CarouselSlideService $slideService): Response
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $slideService->updatePosition((int) $request->get('slide_id'), (int) $request->get('position'));
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    public function toggleVisibility(Request $request, CarouselSlideService $slideService): Response
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::UPDATE)) {
+            return $response;
+        }
+
+        $this->getTokenProvider()->checkToken((string) $request->query->get('_token'));
+
+        $slideService->toggleVisibility((int) $request->get('slideId'));
+
+        return $this->redirectToConfigurationPage();
+    }
+
+    public function deleteSlide(
+        Request $request,
+        EventDispatcherInterface $eventDispatcher,
+        CarouselSlideService $slideService,
+    ): Response {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, ['carousel'], AccessManager::DELETE)) {
             return $response;
         }
 
-        $imageId = $request->get('image_id');
+        $this->getTokenProvider()->checkToken((string) $request->request->get('_token', (string) $request->query->get('_token')));
 
-        if ($imageId != '') {
-            $carousel = CarouselQuery::create()->findPk($imageId);
+        $slideId = (int) $request->get('slide_id');
 
-            if (null !== $carousel) {
-                $carousel->delete();
-            }
+        if (null !== $slide = CarouselQuery::create()->findPk($slideId)) {
+            $event = new CarouselSlideEvent($slide);
+
+            $eventDispatcher->dispatch($event, CarouselEvents::SLIDE_DELETE);
+            $slideService->delete($slideId);
+            $eventDispatcher->dispatch($event, CarouselEvents::SLIDE_DELETED);
         }
 
         return $this->redirectToConfigurationPage();
     }
 
-    protected function redirectToConfigurationPage()
+    protected function editUrl(int $slideId): string
+    {
+        return URL::getInstance()->absoluteUrl('/admin/module/carousel/edit/'.$slideId);
+    }
+
+    protected function redirectToConfigurationPage(): RedirectResponse
     {
         return new RedirectResponse(URL::getInstance()->absoluteUrl('/admin/module/Carousel'));
     }

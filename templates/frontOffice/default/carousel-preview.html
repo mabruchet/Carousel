@@ -1,0 +1,46 @@
+{* Neutral fallback of the back-office preview (route /carousel-preview/{group},
+   admin session required). This standalone page is rendered only when the active
+   front theme provides no carousel-preview.html override of its own: a theme is
+   expected to ship one so the preview shows its real markup. *}
+<!DOCTYPE html>
+<html lang="{lang attr="code"}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Carousel preview &mdash; {$group}</title>
+    <style>
+        body { margin: 0; font-family: system-ui, sans-serif; }
+        .carousel-preview { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+        .carousel-preview figure { flex: 0 0 100%; margin: 0; position: relative; scroll-snap-align: start; }
+        .carousel-preview img { width: 100%; display: block; }
+        .carousel-preview figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: .75rem 1rem; background: linear-gradient(transparent, rgba(0,0,0,.6)); color: #fff; }
+        .carousel-preview figcaption h3 { margin: 0 0 .25rem; font-size: 1.1rem; }
+        .carousel-preview figcaption p { margin: 0; font-size: .85rem; }
+        .carousel-preview-empty { padding: 1rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+{ifloop rel="carousel.preview"}
+    <div class="carousel-preview">
+        {loop type="carousel" name="carousel.preview" group=$group backend_context=1 width=1200 height=390 resize_mode="borders"}
+            <figure>
+                <picture>
+                    {if $MOBILE_IMAGE_URL}<source media="(max-width: 767px)" srcset="{$MOBILE_IMAGE_URL}">{/if}
+                    <img src="{$IMAGE_URL}" alt="{$ALT}" loading="eager">
+                </picture>
+                {if $TITLE || $CHAPO}
+                    <figcaption>
+                        {if $TITLE}<h3>{$TITLE}</h3>{/if}
+                        {if $CHAPO}<p>{$CHAPO}</p>{/if}
+                    </figcaption>
+                {/if}
+            </figure>
+        {/loop}
+    </div>
+{/ifloop}
+{elseloop rel="carousel.preview"}
+    <p class="carousel-preview-empty">{intl l="No published slide in this group." d='carousel.bo.default'}</p>
+{/elseloop}
+</body>
+</html>

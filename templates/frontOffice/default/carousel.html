@@ -5,13 +5,19 @@
             <div class="carousel-inner">
                 {loop type="carousel" name="carousel.front" width="1200" height="390" resize_mode="borders"}
                 <figure class="item {if $LOOP_COUNT == 1}active{/if}">
-                    {if $URL}<a href="{$URL|default:'#'}">{/if}
-                    <img src="{$IMAGE_URL}" alt="{$ALT}">
+                    {if $URL}<a href="{$URL|default:'#'}" {if $LINK_TARGET}target="{$LINK_TARGET}"{/if}>{/if}
+                    <picture>
+                        {if $MOBILE_IMAGE_URL}<source media="(max-width: 767px)" srcset="{$MOBILE_IMAGE_URL}">{/if}
+                        <img src="{$IMAGE_URL}" alt="{$ALT}">
+                    </picture>
                     {if $URL}</a>{/if}
 
                     <div class="carousel-caption">
                         {if $TITLE}<h3>{$TITLE}</h3>{/if}
                         {if $DESCRIPTION}{$DESCRIPTION nofilter}{/if}
+                        {if $URL && $BUTTON_LABEL}
+                            <p><a class="btn btn-primary" href="{$URL}" {if $LINK_TARGET}target="{$LINK_TARGET}"{/if}>{$BUTTON_LABEL}</a></p>
+                        {/if}
                     </div>
                 </figure>
                 {/loop}

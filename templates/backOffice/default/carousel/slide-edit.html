@@ -1,0 +1,195 @@
+{extends file="admin-layout.tpl"}
+
+{block name="check-resource"}admin.module{/block}
+{block name="check-access"}update{/block}
+
+{* The module is reached from Tools > "Edit your carousel": keep the sidebar there. *}
+{block name="no-return-functions"}
+    {$admin_current_location = 'tools'}
+{/block}
+
+{block name="page-title"}{intl l='Edit a slide' d='carousel.bo.default'}{/block}
+
+{block name="main-content"}
+{loop type="carousel" name="carousel.edit" id=$slide_id backend_context=1 filter_disable_slides=0 width=550 height=200 resize_mode="borders" lang=$edit_language_id}
+<div class="general-block-decorator">
+    <div class="row">
+        <div class="col-md-12 title title-without-tabs">
+            <a href="{url path='/admin/module/Carousel'}">{intl l="Carousels" d='carousel.bo.default'}</a>
+            / {intl l='Edit a slide' d='carousel.bo.default'} &mdash; {if $TITLE}{$TITLE}{else}#{$ID}{/if}
+            <span class="label label-default">{$GROUP}</span>
+        </div>
+    </div>
+
+    <div class="form-container">
+    {form name="carousel_slide"}
+        <form method="POST" action="{url path="/admin/module/carousel/edit/`$ID`"}" {form_enctype}>
+            {form_hidden_fields}
+
+            {include file="includes/inner-form-toolbar.html"
+                hide_submit_buttons = false
+                hide_save_and_close_button = true
+                close_url = {url path='/admin/module/Carousel'}
+                page_url = {url path="/admin/module/carousel/edit/`$ID`"}
+            }
+
+            {form_field field='slide_id'}
+                <input type="hidden" name="{$name}" value="{$ID}" />
+            {/form_field}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">{intl l="Content" d='carousel.bo.default'}</div>
+                        <div class="panel-body">
+                            {render_form_field field='title' value=$TITLE}
+                            {render_form_field field='alt' value=$ALT}
+                            {render_form_field field='chapo' value=$CHAPO}
+
+                            {form_field field='description'}
+                                <div class="form-group">
+                                    <label class="control-label" for="{$label_attr.for|default:'carousel_description'}">{$label}</label>
+                                    <textarea id="{$label_attr.for|default:'carousel_description'}" name="{$name}" class="form-control wysiwyg" rows="6">{$DESCRIPTION}</textarea>
+                                </div>
+                            {/form_field}
+
+                            {render_form_field field='postscriptum' value=$POSTSCRIPTUM}
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">{intl l="Link / call to action" d='carousel.bo.default'}</div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-6">{render_form_field field='url' value=$URL}</div>
+                                <div class="col-md-3">{render_form_field field='link_target' value=$LINK_TARGET}</div>
+                                <div class="col-md-3">{render_form_field field='button_label' value=$BUTTON_LABEL}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {* Extension slot: other modules add their fields here. Inputs must be
+                       named carousel_slide[<field>] and the matching form fields added
+                       through TheliaEvents::FORM_AFTER_BUILD . '.carousel_slide'. *}
+                    {hook name="carousel.slide-edit.extra-fields" slide_id=$ID group=$GROUP}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">{intl l="Publication" d='carousel.bo.default'}</div>
+                        <div class="panel-body">
+                            {render_form_field field='group' value=$GROUP}
+
+                            {form_field field='disable'}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="{$name}" value="1" {if $DISABLE}checked{/if} /> {$label}
+                                    </label>
+                                </div>
+                            {/form_field}
+
+                            {form_field field='limited'}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="{$name}" value="1" {if $LIMITED}checked{/if} /> {$label}
+                                    </label>
+                                </div>
+                            {/form_field}
+
+                            {form_field field='start_date'}
+                                <div class="form-group">
+                                    <label class="control-label">{$label}</label>
+                                    <input type="datetime-local" class="form-control" name="{$name}" value="{$START_DATE}" />
+                                </div>
+                            {/form_field}
+
+                            {form_field field='end_date'}
+                                <div class="form-group">
+                                    <label class="control-label">{$label}</label>
+                                    <input type="datetime-local" class="form-control" name="{$name}" value="{$END_DATE}" />
+                                </div>
+                            {/form_field}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {include file="includes/inner-form-toolbar.html"
+                hide_flags = true
+                hide_save_and_close_button = true
+                page_bottom = true
+                close_url = {url path='/admin/module/Carousel'}
+                page_url = {url path="/admin/module/carousel/edit/`$ID`"}
+            }
+        </form>
+    {/form}
+    </div>
+
+    {* ---- Images (outside the main form: separate upload forms) ---- *}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fas fa-desktop"></i> {intl l="Desktop image" d='carousel.bo.default'}
+                </div>
+                <div class="panel-body">
+                    {if $IMAGE_URL}<img src="{$IMAGE_URL}" alt="" class="img-thumbnail" style="max-height: 200px;" />{/if}
+                    {form name="Carousel\Form\CarouselImageForm"}
+                        <form method="POST" action="{url path="/admin/module/carousel/image/`$ID`/desktop"}" {form_enctype} style="margin-top: 10px;">
+                            {form_hidden_fields}
+                            {form_field field='file'}
+                                <div class="input-group">
+                                    <input type="file" name="{$name}" accept="image/*" required class="form-control" />
+                                    <span class="input-group-btn">
+                                        <button type="submit" class="btn btn-success">{intl l="Replace" d='carousel.bo.default'}</button>
+                                    </span>
+                                </div>
+                            {/form_field}
+                        </form>
+                    {/form}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-phone"></span> {intl l="Mobile image" d='carousel.bo.default'}
+                </div>
+                <div class="panel-body">
+                    {if $MOBILE_IMAGE_URL}
+                        <img src="{$MOBILE_IMAGE_URL}" alt="" class="img-thumbnail" style="max-height: 200px;" />
+                    {else}
+                        <p class="text-muted">{intl l="No mobile image: the desktop image is used on small screens." d='carousel.bo.default'}</p>
+                    {/if}
+                    {form name="Carousel\Form\CarouselImageForm"}
+                        <form method="POST" action="{url path="/admin/module/carousel/image/`$ID`/mobile"}" {form_enctype} style="margin-top: 10px;">
+                            {form_hidden_fields}
+                            {form_field field='file'}
+                                <div class="input-group">
+                                    <input type="file" name="{$name}" accept="image/*" required class="form-control" />
+                                    <span class="input-group-btn">
+                                        <button type="submit" class="btn btn-success">{if $MOBILE_IMAGE_URL}{intl l="Replace" d='carousel.bo.default'}{else}{intl l="Upload" d='carousel.bo.default'}{/if}</button>
+                                    </span>
+                                </div>
+                            {/form_field}
+                        </form>
+                    {/form}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/loop}
+{/block}
+
+{block name="javascript-last-call"}
+    <script>
+        // The menu template puts the hook fragment class on the <a>, but the
+        // sidebar styles li.active: mirror the flag on the parent item.
+        // The same line lives in module-configuration.js for the configuration
+        // page: duplication is assumed, the two pages load disjoint scripts.
+        $('#tools_menu_carousel').closest('li').addClass('active');
+    </script>
+    {hook name="carousel.slide-edit.js" slide_id=$slide_id}
+    {hook name="wysiwyg.js" location="wysiwyg-carousel-slide-edit-js"}
+{/block}

@@ -32,6 +32,10 @@ class Carousel extends BaseCarousel implements FileModelInterface
         try {
             $fs->remove($carousel->getUploadDir().DS.$this->getFile());
 
+            if ($this->getMobileFile()) {
+                $fs->remove($carousel->getUploadDir().DS.$this->getMobileFile());
+            }
+
             return true;
         } catch (IOException $e) {
             return false;

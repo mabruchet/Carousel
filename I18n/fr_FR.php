@@ -1,16 +1,6 @@
 <?php
 
-/*
- * This file is part of the Thelia package.
- * http://www.thelia.net
- *
- * (c) OpenStudio <info@thelia.net>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
-return [
+return array(
     'A descriptive title' => 'Un titre descriptif',
     'A short description, used when a summary or an introduction is required' => 'Une courte description, utilisée lorsqu\'un résumé ou une introduction est requise',
     'A short text, used when an additional or supplemental information is required.' => 'Un texte court, utilisé quand une conclusion ou une information complémentaire est nécessaire.',
@@ -33,5 +23,10 @@ return [
     'Start date' => 'Date de début',
     'Summary' => 'Résumé',
     'The detailed description.' => 'La description détaillée.',
+    'Button label' => 'Libellé du bouton',
+    'Link target' => 'Cible du lien',
+    'New window' => 'Nouvelle fenêtre',
+    'Same window' => 'Même fenêtre',
     'Title' => 'Titre',
-];
+    'Use only letters, digits, hyphens and underscores (max 64).' => 'Utilisez uniquement des lettres, chiffres, tirets et underscores (max 64).',
+);

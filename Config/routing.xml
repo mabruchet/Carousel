@@ -4,39 +4,42 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://symfony.com/schema/routing http://symfony.com/schema/routing/routing-1.0.xsd">
 
-    <!--
-
-    if a /admin/module/carousel/ route is provided, a "Configuration" button will be displayed
-    for the module in the module list. Clicking this button will invoke this route.
-
-    <route id="my_route_id" path="/admin/module/carousel">
-        <default key="_controller">Carousel\Full\Class\Name\Of\YourConfigurationController::methodName</default>
+    <route id="carousel.create" path="/admin/module/carousel/create" methods="post">
+        <default key="_controller">Carousel\Controller\ConfigurationController::createSlide</default>
     </route>
 
-    <route id="my_route_id" path="/admin/module/carousel/route-name">
-        <default key="_controller">Carousel\Full\Class\Name\Of\YourAdminController::methodName</default>
+    <route id="carousel.edit" path="/admin/module/carousel/edit/{slideId}" methods="get">
+        <default key="_controller">Carousel\Controller\ConfigurationController::editSlide</default>
+        <requirement key="slideId">\d+</requirement>
     </route>
 
-    <route id="my_route_id" path="/my/route/name">
-        <default key="_controller">Carousel\Full\Class\Name\Of\YourOtherController::methodName</default>
+    <route id="carousel.save" path="/admin/module/carousel/edit/{slideId}" methods="post">
+        <default key="_controller">Carousel\Controller\ConfigurationController::saveSlide</default>
+        <requirement key="slideId">\d+</requirement>
     </route>
 
-    ...add as many routes as required.
-
-    <route>
-    ...
-    </route>
-    -->
-    <route id="carousel.upload.image" path="/admin/module/carousel/upload" methods="post">
+    <route id="carousel.image.upload" path="/admin/module/carousel/image/{slideId}/{variant}" methods="post">
         <default key="_controller">Carousel\Controller\ConfigurationController::uploadImage</default>
+        <requirement key="slideId">\d+</requirement>
+        <requirement key="variant">desktop|mobile</requirement>
     </route>
 
-    <route id="carousel.update" path="/admin/module/carousel/update" methods="post">
-        <default key="_controller">Carousel\Controller\ConfigurationController::updateAction</default>
+    <route id="carousel.update_position" path="/admin/module/carousel/update-position" methods="post">
+        <default key="_controller">Carousel\Controller\ConfigurationController::updatePosition</default>
+    </route>
+
+    <route id="carousel.toggle" path="/admin/module/carousel/toggle-visible/{slideId}" methods="get">
+        <default key="_controller">Carousel\Controller\ConfigurationController::toggleVisibility</default>
+        <requirement key="slideId">\d+</requirement>
     </route>
 
     <route id="carousel.delete" path="/admin/module/carousel/delete" methods="post">
-        <default key="_controller">Carousel\Controller\ConfigurationController::deleteAction</default>
+        <default key="_controller">Carousel\Controller\ConfigurationController::deleteSlide</default>
+    </route>
+
+    <route id="carousel.front.preview" path="/carousel-preview/{group}" methods="get">
+        <default key="_controller">Carousel\Controller\Front\PreviewController::preview</default>
+        <requirement key="group">[\w-]{1,64}</requirement>
     </route>
 
 </routes>

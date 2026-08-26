@@ -1,24 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="http://thelia.net/schema/dic/module"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_1.xsd">
+        xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_2.xsd">
     <fullnamespace>Carousel\Carousel</fullnamespace>
     <descriptive locale="en_US">
-        <title>An image carousel</title>
+        <title>Carousel</title>
+        <!--
+        <subtitle></subtitle>
+        <description></description>
+        <postscriptum></postscriptum>
+        -->
     </descriptive>
     <descriptive locale="fr_FR">
-        <title>Un carrousel d'images</title>
+        <title>Carousel</title>
     </descriptive>
+    <!-- <logo></logo> -->
+    <!--<images-folder>images</images-folder>-->
     <languages>
         <language>en_US</language>
         <language>fr_FR</language>
     </languages>
-    <version>2.6.0</version>
-    <author>
-        <name>Manuel Raynaud, Franck Allimant</name>
-        <email>manu@raynaud.io, franck@cqfdev.fr</email>
-    </author>
+    <version>2.7.0</version>
+    <authors>
+        <author>
+            <name></name>
+            <email></email>
+        </author>
+    </authors>
     <type>classic</type>
-    <thelia>2.6.0</thelia>
-    <stability>alpha</stability>
+    <!--
+    module dependencies
+    <required>
+        <module version="&gt;=0.1">Front</module>
+        <module version="~1.0">HookCart</module>
+        <module version="&gt;0.2">HookSearch</module>
+    </required>
+    -->
+    <thelia>2.5.0</thelia>
+    <stability>other</stability>
+    <mandatory>0</mandatory>
+    <hidden>0</hidden>
 </module>
